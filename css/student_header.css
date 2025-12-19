@@ -1,0 +1,128 @@
+/* header.css */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.main-header {
+    background-color: #263576;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+    height: 50px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.nav-icons {
+    display: flex;
+    align-items: center;
+    gap: 3.5rem;
+    margin-right: 1.5rem;
+  }
+  
+  .nav-icon {
+    color: #ffffff;
+    font-size: 1.5rem;
+    position: relative;
+    text-decoration: none;
+  }
+  
+  .nav-icon:hover {
+    color: #007BFF;
+  }
+  
+  .profile-dropdown {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
+  
+  .profile-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 120%;
+    right: 0;
+    background-color: #263576;;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    min-width: 250px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+  }
+  
+  .dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: white;
+    font-size: 17px;
+  }
+  .dropdown-menu a i{
+    margin-right: 8px;
+  }
+  
+  .dropdown-menu a:hover {
+    background-color: #2849db;
+  }
+
+.logo-container .logo {
+    height: 50px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-btn {
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 2px solid white;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-btn:hover {
+    background-color: white;
+    color: #263576;
+}
+.nav-icon:hover::after {
+  content: "My Notifications";
+  position: absolute;
+  bottom: -45px; /* adjust as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color:  #263576;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 10;
+}
+.profile-dropdown:hover::after {
+  position: absolute;
+  bottom: -45px; /* adjust as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color:  #263576;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 10;
+}

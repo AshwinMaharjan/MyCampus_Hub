@@ -1,0 +1,243 @@
+/* admin_menu.css */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body,html {
+    min-height: 100%;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+  }
+  
+  /* Wrapping sidebar and content */
+  .page-wrapper {
+    display: flex;
+    min-height: calc(100vh - 60px);
+  }
+  
+  #toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: green;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    padding: 16px 24px;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.5s, bottom 0.5s;
+  }
+  
+  #toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+  }
+
+  
+  /* Sidebar */
+  .sidebar {
+    width: 250px;
+    background-color: #263576;
+    color: white;
+    min-height: 100vh;
+    padding-top: 20px;
+    position: relative;
+  }
+  
+  .sidebar-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 22px;
+    padding: 10px 0;
+  }
+  
+  .sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sidebar-menu a {
+    display: block;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: white;
+    background-color: #263576;
+    border-bottom: 1px solid #1e2d5c;
+  }
+  
+  .sidebar-menu li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+  }
+  
+  .sidebar-menu li a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    padding: 15px 20px;
+    transition: background 0.3s ease;
+  }
+  
+  .sidebar-menu li a:hover {
+    background-color: #1e2d5c;
+  }
+  
+  .dropdown-content {
+    display: none;
+    background-color: #334488;
+  }
+  
+  .dropdown-content li a {
+    padding-left: 40px;
+    background-color: #334488;
+    font-size: 14px;
+  }
+  
+  /* Main content beside sidebar */
+  .main-content {
+    flex: 1;
+    padding: 30px;
+    background: #fff;
+  }
+  
+
+  .form-container {
+    width: 100%;
+    padding: 40px 60px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    overflow-y: auto;
+    max-width: none;
+  }
+  
+  .form-container > h2 {
+    color: #263576;
+    font-size: 28px;
+    margin-bottom: 25px;
+    text-align: left;
+  }
+  
+  form input[type="text"] {
+    padding: 16px;
+    font-size: 18px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+  
+  form button {
+    background-color: green;
+    color: white;
+    border: none;
+    padding: 16px;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
+  }
+  
+  form button:hover {
+    background-color: #3b4cca;
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .success {
+    color: green;
+    margin-bottom: 15px;
+  }
+  
+  .error {
+    color: red;
+    margin-bottom: 15px;
+  }
+  
+  /* Fix footer layout */
+  footer, .footer, .lower-footer {
+    clear: both;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  h2 {
+    color: #263576;
+    margin-bottom: 25px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #263576;
+    color: white;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  tr:hover {
+    background-color: #eaeaea;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-edit {
+    background-color: green;
+  }
+
+  .btn-edit:hover {
+    background-color: rgb(0, 78, 0);
+  }
+
+  .btn-delete {
+    background-color: red;
+  }
+
+  .btn-delete:hover {
+    background-color: rgb(189, 0, 0);
+  }

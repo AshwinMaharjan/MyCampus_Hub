@@ -1,0 +1,140 @@
+/* login.css */
+
+/* General Page Setup */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: url('../images/prime_building.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Centered Login Form Container */
+.login-container {
+    margin-top: 80px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Simple Login Form */
+.login-form {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 40px 50px 30px 30px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    max-width: 350px;
+    width: 100%;
+    text-align: center;
+    color: #000000;
+}
+
+/* Form Inputs */
+.login-form input {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    color: #000000;
+    font-size: 16px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.login-form input::placeholder {
+    color: #000000;
+}
+
+/* User Type Selection Container */
+/* Select Dropdown */
+.login-form select {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    color: #000000;
+    font-size: 16px;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.login-form select:focus {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.login-form select option {
+    background: #ffffff;
+    color: #000000;
+    padding: 10px;
+}
+
+/* Register Link */
+.register-link {
+    color: black;
+    font-weight: 600;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+/* Login Button */
+.login-form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #3b4cca;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    margin-top: 10px;
+}
+
+.login-form button:hover {
+    background-color: #2b37a0;
+}
+
+/* Login Options */
+.login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    margin: 10px 0;
+}
+
+.login-options label {
+    display: flex;
+    font-size: 15px;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.login-options a {
+    text-decoration: none;
+    color: #000000;
+}
+
+.login-options a:hover {
+    text-decoration: underline;
+}

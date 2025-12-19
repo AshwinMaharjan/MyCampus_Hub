@@ -1,0 +1,10 @@
+data:
+mysql
+performance_schema
+phpmyadmin
+test
+
+delete all except 'ibdata1'
+
+backup: copy all except 'ibdata1'
+

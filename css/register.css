@@ -1,0 +1,312 @@
+/* register.css */
+
+/* General Page Setup */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: url('../images/prime_building.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Centered Register Form Container */
+.register-container {
+    margin-top:80px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+}
+
+/* Register Form Styling */
+#registerForm {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 35px 45px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    width: 100%;
+    max-width: 1400px;
+    color: #000000;
+}
+
+/* Form Heading */
+#registerForm h2 {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 28px;
+    color: #000000;
+}
+
+.form-subtitle {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #000000;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Three-column form layout */
+.form-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 25px;
+}
+
+/* Form Column Styling */
+.form-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.column-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+    color: #000000;
+}
+
+.column-title i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Form Groups */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 18px;
+    position: relative;
+}
+
+/* Labels */
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #000000;
+}
+
+.form-group label i {
+    margin-right: 6px;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Input Fields, Select */
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.4);
+    color: #000000;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: #3b4cca;
+    box-shadow: 0 0 0 3px rgba(59, 76, 202, 0.1);
+}
+
+/* Valid Input State */
+.form-group input.valid,
+.form-group select.valid {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* Invalid Input State */
+.form-group input.invalid,
+.form-group select.invalid {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* Error Message Styling */
+.error-message {
+    display: none;
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Placeholder Color */
+.form-group input::placeholder {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+/* Select Dropdown Styling */
+.form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.form-group select option {
+    background: #ffffff;
+    color: #000000;
+    padding: 10px;
+}
+
+/* Field Hints */
+.field-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.7);
+    font-style: italic;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.password-strength.weak {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.password-strength.medium {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+
+.password-strength.strong {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+/* File Input Styling */
+.file-input-wrapper {
+    position: relative;
+}
+
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.file-input-wrapper .file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border: 2px dashed rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    color: #000000;
+}
+
+.file-input-wrapper .file-label:hover {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: #3b4cca;
+}
+
+.file-input-wrapper .file-label i {
+    font-size: 18px;
+}
+
+/* Form Actions */
+.form-actions {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Button Styling */
+#registerForm button[type="submit"] {
+    padding: 14px 40px;
+    background: linear-gradient(135deg, #3b4cca, #2b37a0);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(59, 76, 202, 0.3);
+}
+
+#registerForm button[type="submit"]:hover {
+    background: linear-gradient(135deg, #2b37a0, #1f2870);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 76, 202, 0.4);
+}
+
+#registerForm button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+#registerForm button[type="submit"]:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#registerForm button[type="submit"] i {
+    margin-right: 8px;
+}
+
+/* Login Link */
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #000000;
+}
+
+.login-link a {
+    color: #3b4cca;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
