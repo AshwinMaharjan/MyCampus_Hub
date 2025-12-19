@@ -1,0 +1,447 @@
+/* Main Content Area */
+.main-content {
+  padding: 30px;
+  width: 100%;
+  overflow-x: auto;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: calc(100vh - 200px);
+}
+
+/* Form Container */
+.form-container {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(38, 53, 118, 0.1);
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Header */
+.form-header {
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 20px;
+}
+
+.form-header h2 {
+  color: #263576;
+  font-size: 26px;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-header h2 i {
+  font-size: 28px;
+  color: #263576;
+}
+
+.form-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.required {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+/* Form Control */
+.form-control {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 150px;
+  max-height: 400px;
+  line-height: 1.5;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #263576;
+  box-shadow: 0 0 0 4px rgba(38, 53, 118, 0.1);
+}
+
+.form-control:hover:not(:focus) {
+  border-color: #d1d5db;
+}
+
+/* Character Count */
+.char-count {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* Button Row */
+.button-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+/* Buttons */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.btn i {
+  font-size: 16px;
+}
+
+/* Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-secondary:hover {
+  background-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* Notification Overlay */
+.notification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.notification-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Notification Modal */
+.notification-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s ease-out;
+    position: relative;
+}
+
+/* Notification Icon */
+.notification-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    animation: bounce 0.6s ease-out;
+}
+
+@keyframes bounce {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Modal States */
+.notification-modal.success .notification-icon {
+    color: #10b981;
+}
+
+.notification-modal.success {
+    border-left: 5px solid #10b981;
+}
+
+.notification-modal.error .notification-icon {
+    color: #ef4444;
+}
+
+.notification-modal.error {
+    border-left: 5px solid #ef4444;
+}
+
+.notification-modal.invalid .notification-icon {
+    color: #ec4899;
+}
+
+.notification-modal.invalid {
+    border-left: 5px solid #ec4899;
+}
+
+/* Notification Title */
+.notification-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1f2937;
+}
+
+/* Notification Message */
+.notification-message {
+    font-size: 16px;
+    color: #6b7280;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* Progress Bar */
+.notification-progress {
+    height: 3px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.notification-progress-bar {
+    height: 100%;
+    animation: progress linear 2s forwards;
+    border-radius: 3px;
+}
+
+.notification-modal.success .notification-progress-bar {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.notification-modal.error .notification-progress-bar {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.notification-modal.invalid .notification-progress-bar {
+    background: linear-gradient(90deg, #ec4899, #be185d);
+}
+
+@keyframes progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Notification Buttons */
+.notification-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.notification-button {
+    padding: 10px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    max-width: 180px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.notification-modal.success .notification-button {
+    background: #10b981;
+    color: white;
+}
+
+.notification-modal.success .notification-button:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+.notification-modal.error .notification-button {
+    background: #ef4444;
+    color: white;
+}
+
+.notification-modal.error .notification-button:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+.notification-modal.invalid .notification-button {
+    background: #ec4899;
+    color: white;
+}
+
+.notification-modal.invalid .notification-button:hover {
+    background: #be185d;
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 15px;
+  }
+
+  .form-container {
+    padding: 25px;
+    margin: 10px;
+  }
+
+  .form-header h2 {
+    font-size: 22px;
+  }
+
+  .button-row {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .notification-modal {
+    width: 95%;
+    max-width: 95%;
+    padding: 30px;
+  }
+
+  .notification-buttons {
+    flex-direction: column;
+  }
+
+  .notification-button {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container {
+    padding: 20px;
+  }
+
+  .form-header h2 {
+    font-size: 20px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .form-control {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 120px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .notification-modal {
+    padding: 25px;
+  }
+
+  .notification-icon {
+    font-size: 50px;
+  }
+
+  .notification-title {
+    font-size: 20px;
+  }
+
+  .notification-message {
+    font-size: 14px;
+  }
+}

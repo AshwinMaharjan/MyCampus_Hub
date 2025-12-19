@@ -1,0 +1,30 @@
+/* lower-footer.css */
+
+.lower-footer {
+    background-color: #0b142a;  /* Slightly darker than #263576 for contrast */
+    color: #f1f1f1;
+    text-align: center;
+    padding: 25px 25px;
+    font-size: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lower-footer p {
+    margin: 0;
+    font-weight: 400;
+}
+.lower-footer a.developer-link {
+    color: white;
+    
+}
+
+.lower-footer a.developer-link:hover {
+    text-decoration: underline; /* optional for hover effect */
+}
+
+@media (max-width: 600px) {
+    .lower-footer {
+        font-size: 13px;
+        padding: 10px 15px;
+    }
+}

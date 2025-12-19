@@ -1,0 +1,168 @@
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    header {
+      background-color: #263576;
+      color: white;
+      padding: 60px 20px;
+      text-align: center;
+      position: fixed;
+  top: 0;
+  left: 0;
+  width: 1430px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    header h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .hero-buttons a {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      background: white;
+      color: #263576;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .section {
+      padding: 70px 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .section h2 {
+      color: #263576;
+      margin-bottom: 20px;
+      font-size: 26px;
+      border-left: 6px solid #263576;
+      padding-left: 12px;
+    }
+
+    .courses, .notices, .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+    .course, .notice, .feature-box {
+      flex: 1 1 250px;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .course:hover, .notice:hover, .feature-box:hover {
+      background-color: #e8eaf0;
+    }
+
+    iframe {
+      width: 100%;
+      height: 300px;
+      border: none;
+      border-radius: 8px;
+    }
+
+    .contact-btn {
+      display: block;
+      width: fit-content;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: #263576;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: 0.5s ease;
+    }
+    .contact-btn:hover{
+        cursor: pointer;
+        transform: scale(1.2);
+        background: #002fff;
+
+    }
+.about-bg {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+
+.about-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.about-bg .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(38, 53, 118, 0.6); /* semi-transparent blue */
+  z-index: 1;
+}
+
+.content {
+  position: absolute;
+  top: 200px;
+  left: 90px;
+  background-color: #263576;
+  color: white;
+  padding: 20px 30px;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 250px;          /* ⬅️ Increase width */
+  height: 120px;
+}
+
+.content h1 {
+  margin: 0 0 30px;
+  font-size: 2.2rem;
+}
+
+.content p a {
+  color: white;
+  text-decoration: none;
+  margin-right: 10px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+.content a:hover {
+    color: #fbff29;
+}
+.notice {
+  text-align: center;
+  padding: 20px;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  transition: 0.5s ease;
+}
+
+.notice:hover {
+  cursor: pointer;
+  transform: scale(1.1);
+  background-color: #e8eaf0;
+}
+
+.notice-icon, .feature-icon {
+  font-size: 30px;
+  color: rgba(13, 13, 13, 0.7);
+  margin-bottom: 10px;
+  display: block;
+}
+
+
