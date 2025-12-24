@@ -476,11 +476,6 @@ $result = $stmt->get_result();
           <?php endforeach; ?>
         </select>
 
-        <select name="staff_type">
-          <option value="">All Staff Types</option>
-          <option value="teaching" <?php echo $staff_type_filter === 'teaching' ? 'selected' : ''; ?>>Teaching</option>
-          <option value="non_teaching" <?php echo $staff_type_filter === 'non_teaching' ? 'selected' : ''; ?>>Non-Teaching</option>
-        </select>
 
         <input type="text" name="search" placeholder="Search by name, ID, or email..." value="<?php echo htmlspecialchars($search_filter); ?>">
 
@@ -504,7 +499,6 @@ $result = $stmt->get_result();
           <th>Address</th>
           <th>Course</th>
           <th>Semester</th>
-          <th>Staff Type</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -532,8 +526,6 @@ $result = $stmt->get_result();
                 echo "<td>" . (!empty($row['course_name']) ? nl2br(htmlspecialchars(str_replace(",", ", ", $row['course_name']))) : 'N/A') . "</td>";
 
                 echo "<td>" . (!empty($row['sem_name']) ? htmlspecialchars($row['sem_name']) : 'N/A') . "</td>";
-
-                echo "<td>" . (!empty($row['staff_type']) ? htmlspecialchars($row['staff_type']) : 'N/A') . "</td>";
 
                 echo "<td>";
                 echo "<a href='edit_staff.php?id=" . $row['user_id'] . "' class='btn btn-edit'>

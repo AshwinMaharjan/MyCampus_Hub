@@ -64,9 +64,29 @@ while($row = mysqli_fetch_assoc($leave_time_result)) {
 }
 
 // User Composition
-$user_comp_query = " SELECT SUM(CASE WHEN role_id = 2 THEN 1 ELSE 0 END) as students, SUM(CASE WHEN role_id = 3 AND staff_type = 'Teaching' THEN 1 ELSE 0 END) as faculty, SUM(CASE WHEN role_id = 3 AND staff_type = 'Non Teaching' THEN 1 ELSE 0 END) as non_faculty FROM users WHERE status = 'Active' ";
-$user_comp_result = mysqli_query($conn, $user_comp_query);
-$user_comp = mysqli_fetch_assoc($user_comp_result);
+// Count total students
+$student_query = "SELECT COUNT(*) as students FROM users WHERE role_id = 2 AND status = 'Active'";
+$student_result = mysqli_query($conn, $student_query);
+$student_count = mysqli_fetch_assoc($student_result)['students'];
+
+// Count teaching staff (any staff with teaching assignments)
+$faculty_query = "SELECT COUNT(DISTINCT staff_id) as faculty FROM staff_teaching_assignments";
+$faculty_result = mysqli_query($conn, $faculty_query);
+$faculty_count = mysqli_fetch_assoc($faculty_result)['faculty'];
+
+// Count non-faculty staff (staff who are coordinator-only)
+$non_faculty_query = "
+    SELECT COUNT(*) as non_faculty 
+    FROM users u 
+    WHERE u.role_id = 3 
+    AND u.status = 'Active' 
+    AND u.user_id IN (
+        SELECT user_id FROM coordinators
+        WHERE user_id NOT IN (SELECT staff_id FROM staff_teaching_assignments)
+    )
+";
+$non_faculty_result = mysqli_query($conn, $non_faculty_query);
+$non_faculty_count = mysqli_fetch_assoc($non_faculty_result)['non_faculty'];
 
 // Study Material Upload Trend (Last 7 days)
 $material_trend_query = "SELECT DATE(upload_date) as date, COUNT(*) as count

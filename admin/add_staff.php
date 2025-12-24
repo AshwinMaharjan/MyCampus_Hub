@@ -23,88 +23,34 @@ if (isset($_POST['add_staff_btn'])) {
     $phone    = trim($_POST['contact_number']);
     $address  = trim($_POST['address']);
     $status   = $_POST['status'];
-    $role     = 3;
-    $staff_type = $_POST['staff_type'];
+    $role     = 3; // Staff role
     
-    // Initialize variables
-    $semesters = '';
-    $course_name = '';
-    $course_id_str = '';
-    $sem_id_str = '';
-    $is_coordinator = 0;
-    $coordinator_for = null;
+    // Check which responsibilities are selected
+    $assign_teaching = isset($_POST['assign_teaching']) ? 1 : 0;
+    $assign_coordinator = isset($_POST['assign_coordinator']) ? 1 : 0;
 
-    // Handle Teaching Staff
-    if ($staff_type === 'Teaching') {
-        // Get selected semesters
-        $semesters = isset($_POST['sem_name']) ? implode(",", $_POST['sem_name']) : '';
-        
-        // Get semester IDs
-        $semIds = [];
-        if (!empty($_POST['sem_name'])) {
-            foreach ($_POST['sem_name'] as $semName) {
-                $semQuery = $conn->prepare("SELECT sem_id FROM semester WHERE sem_name = ?");
-                $semQuery->bind_param("s", $semName);
-                $semQuery->execute();
-                $semQuery->bind_result($sid);
-                if ($semQuery->fetch()) {
-                    $semIds[] = $sid;
-                }
-                $semQuery->close();
-            }
-        }
-        $sem_id_str = implode(",", $semIds);
-
-        // Get selected courses
-        $course_name = isset($_POST['course_name']) ? implode(",", $_POST['course_name']) : '';
-        $courseIds = [];
-
-        if (!empty($_POST['course_name'])) {
-            $selectedCourses = $_POST['course_name'];
-            foreach ($selectedCourses as $courseName) {
-                $courseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
-                $courseQuery->bind_param("s", $courseName);
-                $courseQuery->execute();
-                $courseQuery->bind_result($cid);
-                if ($courseQuery->fetch()) {
-                    $courseIds[] = $cid;
-                }
-                $courseQuery->close();
-            }
-        }
-        $course_id_str = implode(",", $courseIds);
-    }
-    // Handle Non-Teaching Staff (Coordinator)
-// Handle Non-Teaching Staff (Coordinator)
-elseif ($staff_type === 'Non Teaching') {
-    $is_coordinator = isset($_POST['is_coordinator']) ? 1 : 0;    
-    if ($is_coordinator && isset($_POST['coordinator_course']) && !empty($_POST['coordinator_course'])) {
-        $coordinator_course_name = $_POST['coordinator_course'];
-        
-        // Get course ID for coordinator
-        $courseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
-        $courseQuery->bind_param("s", $coordinator_course_name);
-        $courseQuery->execute();
-        $courseQuery->bind_result($coord_course_id);
-        if ($courseQuery->fetch()) {
-            $coordinator_for = $coord_course_id;
-            $course_id_str = (string)$coord_course_id;
-            $course_name = $coordinator_course_name;
-        }
-        $courseQuery->close();
-    }
-    // If not a coordinator, leave course fields empty (already initialized above)
-}
-    // Check for existing email or ID
-    $check = $conn->prepare("SELECT * FROM users WHERE email=? OR id_number=?");
-    $check->bind_param("ss", $email, $id);
-    $check->execute();
-    $result = $check->get_result();
-
-    if ($result->num_rows > 0) {
-        $notification = "This email or ID is already used.";
+    // Validate that at least one responsibility is selected
+    if (!$assign_teaching && !$assign_coordinator) {
+        $notification = "Please assign at least one responsibility (Teaching or Coordinator).";
         $notification_type = "error";
-    } else {
+    }
+    
+    // Check for existing email or ID
+    if (empty($notification)) {
+        $check = $conn->prepare("SELECT * FROM users WHERE email=? OR id_number=?");
+        $check->bind_param("ss", $email, $id);
+        $check->execute();
+        $result = $check->get_result();
+
+        if ($result->num_rows > 0) {
+            $notification = "This email or ID is already used.";
+            $notification_type = "error";
+        }
+        $check->close();
+    }
+
+    // Handle profile photo upload
+    if (empty($notification)) {
         $photo = '';
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] == 0) {
             $ext_allowed = ['jpg', 'jpeg', 'png', 'gif'];
@@ -116,7 +62,6 @@ elseif ($staff_type === 'Non Teaching') {
                 $new_name = uniqid('profile_', true) . '.' . $ext;
                 $folder = 'images/uploads/profile_photos/';
                 
-                // Create directory if it doesn't exist
                 if (!is_dir($folder)) {
                     mkdir($folder, 0777, true);
                 }
@@ -139,67 +84,211 @@ elseif ($staff_type === 'Non Teaching') {
         }
     }
 
-if (empty($notification)) {
+    // Process the form if no errors
+    if (empty($notification)) {
+        $conn->begin_transaction();
 
-    // Ensure coordinator_for is integer and nullable
-    $coordinator_for_val = !empty($coordinator_for) ? (int)$coordinator_for : NULL;
+        try {
+            // Get course_name and sem_name (store ALL selected as comma-separated)
+            $course_name_for_user = null;
+            $sem_name_for_user = null;
+            
+            // NEW: Initialize is_coordinator and coordinator_for
+            $is_coordinator = 0;
+            $coordinator_for = 0;
+            
+            if ($assign_teaching) {
+                // Validate teaching fields
+                if (empty($_POST['course_name']) || empty($_POST['sem_name'])) {
+                    throw new Exception("Please select courses and semesters for teaching assignment.");
+                }
 
-    // Prepare the insert statement
-    $insert = $conn->prepare("
-        INSERT INTO users 
-        (full_name, id_number, email, password, role_id, gender, date_of_birth, contact_number, address, 
-         course_id, course_name, sem_id, sem_name, profile_photo, status, staff_type, is_coordinator, coordinator_for) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
+                // Get ALL selected courses and semesters
+                $selectedCourses = $_POST['course_name'];
+                $selectedSemesters = $_POST['sem_name'];
+                
+                // Store ALL selected course names as comma-separated string
+                $course_name_for_user = implode(', ', $selectedCourses);
+                
+                // Store ALL selected semester names as comma-separated string
+                $sem_name_for_user = implode(', ', $selectedSemesters);
+                
+            } elseif ($assign_coordinator) {
+                // If only coordinator, get course_name from coordinator selection
+                $course_name_for_user = $_POST['coordinator_course'];
+                
+                // sem_name remains NULL for coordinator-only staff
+            }
 
-    if (!$insert) {
-        $notification = "Database error: " . $conn->error;
-        $notification_type = "error";
-    } else {
+            // NEW: Set is_coordinator and coordinator_for based on coordinator assignment
+            if ($assign_coordinator) {
+                $is_coordinator = 1;
+                
+                if (!empty($_POST['coordinator_course'])) {
+                    $coordinator_course_name = $_POST['coordinator_course'];
+                    
+                    // Get course_id for coordinator_for column
+                    $coordCourseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
+                    $coordCourseQuery->bind_param("s", $coordinator_course_name);
+                    $coordCourseQuery->execute();
+                    $coordCourseQuery->bind_result($coord_course_id);
+                    if ($coordCourseQuery->fetch()) {
+                        $coordinator_for = $coord_course_id;
+                    }
+                    $coordCourseQuery->close();
+                }
+            }
 
-        // Bind parameters with correct types
-        // FIXED: Changed 5th parameter from 's' to 'i' for role_id
-        $insert->bind_param(
-            "ssssississssssssii",  // Fixed: role is now 'i' (was 's')
-            $name,
-            $id,
-            $email,
-            $pass,
-            $role,              // This is an integer
-            $gender,
-            $dob,
-            $phone,
-            $address,
-            $course_id_str,
-            $course_name,
-            $sem_id_str,
-            $semesters,
-            $photo,
-            $status,
-            $staff_type,
-            $is_coordinator,
-            $coordinator_for_val
-        );
+            // Insert basic user information WITH course_name, sem_name, is_coordinator, and coordinator_for
+            $insert = $conn->prepare("
+                INSERT INTO users 
+                (full_name, id_number, email, password, role_id, gender, date_of_birth, 
+                 contact_number, address, profile_photo, status, course_name, sem_name, is_coordinator, coordinator_for) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
 
-        // Execute and handle result
-        
-        if ($insert->execute()) {
-            $notification = "Staff added successfully!";
+            if (!$insert) {
+                throw new Exception("Database error: " . $conn->error);
+            }
+
+            $insert->bind_param(
+                "ssssississsssii",
+                $name,
+                $id,
+                $email,
+                $pass,
+                $role,
+                $gender,
+                $dob,
+                $phone,
+                $address,
+                $photo,
+                $status,
+                $course_name_for_user,
+                $sem_name_for_user,
+                $is_coordinator,
+                $coordinator_for
+            );
+
+            if (!$insert->execute()) {
+                throw new Exception("Error inserting user: " . $insert->error);
+            }
+
+            $user_id = $conn->insert_id;
+            $insert->close();
+
+            // Handle Teaching Assignment
+            if ($assign_teaching) {
+                $selectedCourses = $_POST['course_name'];
+                $selectedSemesters = $_POST['sem_name'];
+
+                // Insert into staff_teaching_assignments table
+                $insertTeaching = $conn->prepare("
+                    INSERT INTO staff_teaching_assignments 
+                    (staff_id, course_id, sem_id, sub_id) 
+                    VALUES (?, ?, ?, ?)
+                ");
+
+                if (!$insertTeaching) {
+                    throw new Exception("Database error on teaching assignments: " . $conn->error);
+                }
+
+                foreach ($selectedCourses as $courseName) {
+                    // Get course_id
+                    $courseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
+                    $courseQuery->bind_param("s", $courseName);
+                    $courseQuery->execute();
+                    $courseQuery->bind_result($course_id);
+                    if (!$courseQuery->fetch()) {
+                        $courseQuery->close();
+                        continue;
+                    }
+                    $courseQuery->close();
+
+                    foreach ($selectedSemesters as $semName) {
+                        // Get sem_id
+                        $semQuery = $conn->prepare("SELECT sem_id FROM semester WHERE sem_name = ?");
+                        $semQuery->bind_param("s", $semName);
+                        $semQuery->execute();
+                        $semQuery->bind_result($sem_id);
+                        if (!$semQuery->fetch()) {
+                            $semQuery->close();
+                            continue;
+                        }
+                        $semQuery->close();
+
+                        // Insert the teaching assignment
+                        $sub_id = null; // Set to null or get from form if applicable
+                        $insertTeaching->bind_param("iiii", $user_id, $course_id, $sem_id, $sub_id);
+                        
+                        if (!$insertTeaching->execute()) {
+                            throw new Exception("Error inserting teaching assignment: " . $insertTeaching->error);
+                        }
+                    }
+                }
+                $insertTeaching->close();
+            }
+
+            // Handle Coordinator Assignment
+            if ($assign_coordinator) {
+                if (empty($_POST['coordinator_course'])) {
+                    throw new Exception("Please select a course for coordinator assignment.");
+                }
+
+                $coordinator_course_name = $_POST['coordinator_course'];
+                
+                // Get course ID
+                $courseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
+                $courseQuery->bind_param("s", $coordinator_course_name);
+                $courseQuery->execute();
+                $courseQuery->bind_result($coordinator_for_table);
+                if (!$courseQuery->fetch()) {
+                    throw new Exception("Selected coordinator course not found.");
+                }
+                $courseQuery->close();
+
+                // Insert into coordinators table
+                $insertCoordinator = $conn->prepare("
+                    INSERT INTO coordinators 
+                    (user_id, coordinator_for, full_name, email, contact_number, status) 
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ");
+
+                if (!$insertCoordinator) {
+                    throw new Exception("Database error on coordinators table: " . $conn->error);
+                }
+
+                $insertCoordinator->bind_param(
+                    "iissss",
+                    $user_id,
+                    $coordinator_for_table,
+                    $name,
+                    $email,
+                    $phone,
+                    $status
+                );
+
+                if (!$insertCoordinator->execute()) {
+                    throw new Exception("Error inserting coordinator: " . $insertCoordinator->error);
+                }
+
+                $insertCoordinator->close();
+            }
+
+            $conn->commit();
+
+            $notification = "Staff member created successfully! Responsibilities have been assigned as selected.";
             $notification_type = "success";
             $redirect_url = "manage_staff.php";
-        } else {
-            $notification = "Error: Could not add staff. " . $insert->error;
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $notification = "Error: " . $e->getMessage();
             $notification_type = "error";
         }
-
-        $insert->close();
     }
 }
-
-    $check->close();
-}
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,13 +339,12 @@ if (empty($notification)) {
       background-color: #f0fff4 !important;
     }
 
-    /* Hide/Show fields based on staff type */
     #teaching-fields,
-    #non-teaching-fields {
+    #coordinator-fields {
       display: none;
+      margin-top: 20px;
     }
 
-    /* Notification Styles */
     .notification-overlay {
         position: fixed;
         top: 0;
@@ -418,35 +506,146 @@ if (empty($notification)) {
         transform: translateY(-2px);
     }
 
-    .coordinator-checkbox {
-      margin: 15px 0;
-      padding: 18px 20px;
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      border-radius: 8px;
-      border: 2px solid #2196f3;
+    .instruction-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .coordinator-checkbox label {
+    .instruction-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .instruction-box p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.6;
+      opacity: 0.95;
+    }
+
+    .helper-text {
+      background: #f0f9ff;
+      border-left: 4px solid #3b82f6;
+      padding: 12px 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #1e40af;
+      line-height: 1.5;
+    }
+
+    .info-tooltip {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.5;
+    }
+
+    .info-tooltip i {
+      color: #f59e0b;
+      margin-top: 2px;
+      font-size: 16px;
+    }
+
+    .section-header {
+      background: #f3f4f6;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin: 20px 0 15px 0;
+      border-left: 4px solid #6366f1;
+    }
+
+    .section-header h4 {
+      margin: 0 0 5px 0;
+      color: #374151;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .section-header p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .responsibility-checkboxes {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 8px;
+      border: 2px solid #e5e7eb;
+      margin: 20px 0;
+    }
+
+    .responsibility-checkboxes h4 {
+      margin: 0 0 15px 0;
+      color: #374151;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .responsibility-option {
+      margin: 12px 0;
+      padding: 15px 18px;
+      background: white;
+      border-radius: 8px;
+      border: 2px solid #d1d5db;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .responsibility-option:hover {
+      border-color: #6366f1;
+      background: #f9fafb;
+    }
+
+    .responsibility-option.selected {
+      border-color: #6366f1;
+      background: #eef2ff;
+    }
+
+    .responsibility-option label {
       display: flex;
       align-items: center;
       gap: 12px;
       font-weight: 600;
       cursor: pointer;
-      color: #1565c0;
-      font-size: 16px;
+      color: #374151;
+      font-size: 15px;
       margin: 0;
       padding: 0;
     }
 
-    .coordinator-checkbox input[type="checkbox"] {
-      width: 22px;
-      height: 22px;
+    .responsibility-option input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
       cursor: pointer;
-      accent-color: #1976d2;
+      accent-color: #6366f1;
+    }
+
+    .responsibility-option .description {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: normal;
+      margin-top: 5px;
+      margin-left: 32px;
     }
 
     #coordinator-course-field {
-      display: none;
       margin-top: 15px;
     }
   </style>
@@ -516,65 +715,7 @@ if (empty($notification)) {
         <div class="error-message" id="address-error"></div>
       </div>
 
-      <!-- Staff Type Selection -->
       <div>
-        <select name="staff_type" id="staff_type" required>
-          <option value="" disabled selected>Select Staff Type</option>
-          <option value="Teaching">Teaching Staff</option>
-          <option value="Non Teaching">Non-Teaching Staff</option>
-        </select>
-        <div class="error-message" id="staff_type-error"></div>
-      </div>
-
-      <!-- Teaching Staff Fields -->
-      <div id="teaching-fields">
-        <fieldset id="course-group">
-          <legend>Select Courses (Teaching)</legend>
-          <?php foreach ($courseList as $course): ?>
-            <label>
-              <input type="checkbox" name="course_name[]" class="course-checkbox" value="<?php echo $course['course_name']; ?>">
-              <?php echo htmlspecialchars($course['course_name']); ?>
-            </label><br>
-          <?php endforeach; ?>
-        </fieldset>
-        <div class="error-message" id="course-error"></div>
-
-        <fieldset id="semester-group">
-          <legend>Select Semesters (Teaching)</legend>
-          <?php
-            $semesters = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
-            foreach ($semesters as $sem) {
-                echo '<label><input type="checkbox" name="sem_name[]" class="semester-checkbox" value="' . $sem . '"> ' . $sem . ' Semester</label><br>';
-            }
-          ?>
-        </fieldset>
-        <div class="error-message" id="semester-error"></div>
-      </div>
-
-      <!-- Non-Teaching Staff Fields -->
-      <div id="non-teaching-fields">
-        <div class="coordinator-checkbox">
-          <label>
-            <input type="checkbox" name="is_coordinator" id="is_coordinator">
-            <span>Assign as Course Coordinator</span>
-          </label>
-        </div>
-
-        <div id="coordinator-course-field">
-          <select name="coordinator_course" id="coordinator_course">
-            <option value="" disabled selected>Select Course to Coordinate</option>
-            <?php foreach ($courseList as $course): ?>
-              <option value="<?php echo $course['course_name']; ?>">
-                <?php echo htmlspecialchars($course['course_name']); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-          <div class="error-message" id="coordinator_course-error"></div>
-        </div>
-      </div>
-
-      <div>
-        <!-- <label for="profile_photo">Profile Photo:</label> -->
         <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required />
         <div class="error-message" id="profile_photo-error"></div>
       </div>
@@ -586,6 +727,67 @@ if (empty($notification)) {
           <option value="inactive">Inactive</option>
         </select>
         <div class="error-message" id="status-error"></div>
+      </div>
+
+      <!-- Responsibility Selection -->
+      <div class="responsibility-checkboxes">
+        <h4><i class="fas fa-tasks"></i> Assign Responsibilities</h4>
+
+        <div class="responsibility-option" id="teaching-option">
+          <label>
+            <input type="checkbox" name="assign_teaching" id="assign_teaching">
+            <span><i class="fas fa-chalkboard-teacher"></i> Assign Teaching Responsibilities</span>
+          </label>
+          <div class="description">Enable if the staff member will teach subjects to students.</div>
+        </div>
+
+        <div class="responsibility-option" id="coordinator-option">
+          <label>
+            <input type="checkbox" name="assign_coordinator" id="assign_coordinator">
+            <span><i class="fas fa-user-tie"></i> Assign as Course Coordinator</span>
+          </label>
+          <div class="description">Enable if the staff member will manage or coordinate a course.</div>
+        </div>
+      </div>
+
+      <!-- Teaching Fields -->
+      <div id="teaching-fields">
+        <fieldset id="course-group">
+          <legend>Select Courses</legend>
+          <?php foreach ($courseList as $course): ?>
+            <label>
+              <input type="checkbox" name="course_name[]" class="course-checkbox" value="<?php echo $course['course_name']; ?>">
+              <?php echo htmlspecialchars($course['course_name']); ?>
+            </label><br>
+          <?php endforeach; ?>
+        </fieldset>
+        <div class="error-message" id="course-error"></div>
+
+        <fieldset id="semester-group">
+          <legend>Select Semesters</legend>
+          <?php
+            $semesters = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
+            foreach ($semesters as $sem) {
+                echo '<label><input type="checkbox" name="sem_name[]" class="semester-checkbox" value="' . $sem . '"> ' . $sem . ' Semester</label><br>';
+            }
+          ?>
+        </fieldset>
+        <div class="error-message" id="semester-error"></div>
+      </div>
+
+      <!-- Coordinator Fields -->
+      <div id="coordinator-fields">
+       <div id="coordinator-course-field">
+          <select name="coordinator_course" id="coordinator_course">
+            <option value="" disabled selected>Select Course to Coordinate</option>
+            <?php foreach ($courseList as $course): ?>
+              <option value="<?php echo $course['course_name']; ?>">
+                <?php echo htmlspecialchars($course['course_name']); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <div class="error-message" id="coordinator_course-error"></div>
+        </div>
       </div>
 
       <button type="submit" name="add_staff_btn">Add Staff</button>
@@ -616,7 +818,7 @@ if (empty($notification)) {
             <?php
             switch ($notification_type) {
                 case 'success':
-                    echo 'Success!';
+                    echo 'Staff Created Successfully';
                     break;
                 case 'error':
                     echo 'Error';
@@ -625,6 +827,11 @@ if (empty($notification)) {
             ?>
         </div>
         <div class="notification-message"><?php echo htmlspecialchars($notification); ?></div>
+        <?php if ($notification_type === 'success'): ?>
+        <div class="helper-text" style="margin: 15px 0; text-align: left;">
+          <strong>System Access:</strong> This staff member has been granted system access based on the selected responsibilities. These assignments can be modified at any time from the staff management page.
+        </div>
+        <?php endif; ?>
         <div class="notification-progress">
             <div class="notification-progress-bar"></div>
         </div>
@@ -647,12 +854,43 @@ if (empty($notification)) {
         }, 300);
     }
 
-    // Auto-close after 2 seconds
     setTimeout(() => {
         closeNotification();
     }, <?php echo $redirect_delay; ?>);
 </script>
 <?php endif; ?>
+
+<script>
+// Toggle responsibility fields
+document.addEventListener('DOMContentLoaded', function() {
+    const teachingCheckbox = document.getElementById('assign_teaching');
+    const coordinatorCheckbox = document.getElementById('assign_coordinator');
+    const teachingFields = document.getElementById('teaching-fields');
+    const coordinatorFields = document.getElementById('coordinator-fields');
+    const teachingOption = document.getElementById('teaching-option');
+    const coordinatorOption = document.getElementById('coordinator-option');
+
+    teachingCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            teachingFields.style.display = 'block';
+            teachingOption.classList.add('selected');
+        } else {
+            teachingFields.style.display = 'none';
+            teachingOption.classList.remove('selected');
+        }
+    });
+
+    coordinatorCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            coordinatorFields.style.display = 'block';
+            coordinatorOption.classList.add('selected');
+        } else {
+            coordinatorFields.style.display = 'none';
+            coordinatorOption.classList.remove('selected');
+        }
+    });
+});
+</script>
 
 <script src="../js/staff_validation.js"></script>
 

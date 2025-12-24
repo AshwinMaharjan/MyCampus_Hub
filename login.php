@@ -10,13 +10,12 @@ $redirect_delay = 2000; // 2 seconds delay before redirect
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $user_type = $_POST['user_type']; // Changed from staff_type to user_type for clarity
+    $user_type = $_POST['user_type'];
 
     $email = mysqli_real_escape_string($conn, $email);
     $password = mysqli_real_escape_string($conn, $password);
     $user_type = mysqli_real_escape_string($conn, $user_type);
 
-    // Fixed SQL query - removed comma, added proper AND logic
     $sql = "SELECT * FROM `users` WHERE email = '$email' AND password = '$password'";
     $result = mysqli_query($conn, $sql);
 
@@ -39,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Account is active, now verify user type matches
             $role_id = $data['role_id'];
-            $staff_type = isset($data['staff_type']) ? $data['staff_type'] : '';
             
             // Verify the selected user type matches the database
             $type_matches = false;
@@ -47,12 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($user_type === 'student' && $role_id == 2) {
                 $type_matches = true;
                 $redirect_url = "student/student_homepage.php";
-            } elseif ($user_type === 'teaching' && $role_id == 3 && strtolower($staff_type) === 'teaching') {
+            } elseif ($user_type === 'faculty' && $role_id == 3) {
+                // All staff members (role_id = 3) login as faculty
+                // The system will determine their specific role internally
                 $type_matches = true;
                 $redirect_url = "faculty/faculty_homepage.php";
-            } elseif ($user_type === 'non_teaching' && $role_id == 3 && strtolower($staff_type) === 'non teaching') {
-                $type_matches = true;
-                $redirect_url = "non_faculty/non_faculty_homepage.php";
             } elseif ($user_type === 'admin' && $role_id == 1) {
                 $type_matches = true;
                 $redirect_url = "admin/admin_homepage.php";
@@ -368,8 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <select name="user_type" id="user_type" required>
                 <option value="">Select User Type</option>
                 <option value="student" <?php echo ($user_type_cookie === 'student') ? 'selected' : ''; ?>>Student</option>
-                <option value="teaching" <?php echo ($user_type_cookie === 'teaching') ? 'selected' : ''; ?>>Teaching Staff</option>
-                <option value="non_teaching" <?php echo ($user_type_cookie === 'non_teaching') ? 'selected' : ''; ?>>Non-Teaching Staff</option>
+                <option value="faculty" <?php echo ($user_type_cookie === 'faculty') ? 'selected' : ''; ?>>Faculty</option>
                 <option value="admin" <?php echo ($user_type_cookie === 'admin') ? 'selected' : ''; ?>>Administrator</option>
             </select>
         </div>

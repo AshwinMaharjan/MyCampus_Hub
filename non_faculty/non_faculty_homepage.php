@@ -7,16 +7,26 @@ if (!isset($_SESSION['uid'])) {
     exit();
 }
 
-$coordinator_id = $_SESSION['uid'];
+$coordinator_user_id = $_SESSION['uid'];
 
 // Debug: Check if coordinator_id is set
-error_log("Coordinator ID: " . $coordinator_id);
+error_log("Coordinator User ID: " . $coordinator_user_id);
 
-// Get Coordinator's Course and Semester with better error handling
+// UPDATED: Get Coordinator's information from COORDINATORS table
 $coordinator_query = "
-    SELECT course_id, sem_id, course_name, sem_name, full_name
-    FROM users
-    WHERE user_id = '$coordinator_id'
+    SELECT 
+        c.coordinator_id,
+        c.coordinator_for,
+        c.full_name,
+        c.email,
+        c.contact_number,
+        c.status,
+        co.course_name,
+        co.course_id
+    FROM coordinators c
+    JOIN course co ON c.coordinator_for = co.course_id
+    WHERE c.user_id = '$coordinator_user_id'
+    LIMIT 1
 ";
 $coordinator_result = mysqli_query($conn, $coordinator_query);
 
@@ -27,25 +37,27 @@ if (!$coordinator_result) {
 $coordinator_data = mysqli_fetch_assoc($coordinator_result);
 
 if (!$coordinator_data) {
-    die("Coordinator not found for user_id: $coordinator_id");
+    die("Coordinator not found for user_id: $coordinator_user_id. Please ensure this user is assigned as a coordinator.");
 }
 
 // Debug output
 error_log("Coordinator Data: " . print_r($coordinator_data, true));
 
-$course_id = $coordinator_data['course_id'];
-$sem_id = $coordinator_data['sem_id'];
-$course_name = $coordinator_data['course_name'] ?? 'N/A';
-$sem_name = $coordinator_data['sem_name'] ?? 'N/A';
+$coordinator_id = $coordinator_data['coordinator_id'];
+$course_id = $coordinator_data['coordinator_for'];
+$course_name = $coordinator_data['course_name'];
 $coordinator_name = $coordinator_data['full_name'];
+$coordinator_email = $coordinator_data['email'];
+$coordinator_status = $coordinator_data['status'];
 
+// Since coordinators manage entire course (all semesters), we'll aggregate data across all semesters
+// Or you can modify to track specific semester if needed
 
-// 1. Subjects Assigned (for their course + sem)
+// 1. Subjects Assigned (for their course - ALL semesters)
 $subjects_query = "
     SELECT COUNT(*) as total
     FROM subject
     WHERE course_id = '$course_id'
-    AND sem_id = '$sem_id'
 ";
 $subjects_result = mysqli_query($conn, $subjects_query);
 if (!$subjects_result) {
@@ -55,13 +67,12 @@ if (!$subjects_result) {
     $total_subjects = mysqli_fetch_assoc($subjects_result)['total'];
 }
 
-// 2. Total Students (in their course + sem)
+// 2. Total Students (in their course - ALL semesters and active)
 $students_query = "
     SELECT COUNT(*) as total
     FROM users
     WHERE role_id = 2
     AND course_id = '$course_id'
-    AND sem_id = '$sem_id'
     AND status = 'Active'
 ";
 $students_result = mysqli_query($conn, $students_query);
@@ -72,7 +83,7 @@ if (!$students_result) {
     $total_students = mysqli_fetch_assoc($students_result)['total'];
 }
 
-// 3. Average Attendance (Last 7 Days)
+// 3. Average Attendance (Last 7 Days) for the entire course
 $seven_days_ago = date('Y-m-d', strtotime('-7 days'));
 $attendance_query = "
     SELECT 
@@ -81,7 +92,6 @@ $attendance_query = "
     FROM attendance a
     JOIN subject s ON a.sub_id = s.sub_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
     AND a.attendance_date >= '$seven_days_ago'
 ";
 $attendance_result = mysqli_query($conn, $attendance_query);
@@ -94,13 +104,12 @@ if (!$attendance_result) {
         round(($attendance_data['present_count'] / $attendance_data['total_count']) * 100, 1) : 0;
 }
 
-// 4. Pending Student Leave Requests
+// 4. Pending Student Leave Requests for the entire course
 $pending_leaves_query = "
     SELECT COUNT(*) as total
     FROM student_leave_requests slr
     JOIN users u ON slr.student_id = u.user_id
     WHERE u.course_id = '$course_id'
-    AND u.sem_id = '$sem_id'
     AND slr.status = 'Pending'
 ";
 $pending_leaves_result = mysqli_query($conn, $pending_leaves_query);
@@ -111,13 +120,12 @@ if (!$pending_leaves_result) {
     $pending_leaves = mysqli_fetch_assoc($pending_leaves_result)['total'];
 }
 
-// 5. Total Study Materials
+// 5. Total Study Materials for the entire course
 $study_materials_query = "
     SELECT COUNT(*) as total
     FROM study_material sm
     JOIN subject s ON sm.subject_id = s.sub_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
 ";
 $study_materials_result = mysqli_query($conn, $study_materials_query);
 if (!$study_materials_result) {
@@ -130,7 +138,7 @@ if (!$study_materials_result) {
 // CHARTS DATA
 $thirty_days_ago = date('Y-m-d', strtotime('-30 days'));
 
-// 1. Attendance Trend (Last 30 Days)
+// 1. Attendance Trend (Last 30 Days) for the entire course
 $attendance_trend_query = "
     SELECT 
         DATE(a.attendance_date) as date,
@@ -139,7 +147,6 @@ $attendance_trend_query = "
     FROM attendance a
     JOIN subject s ON a.sub_id = s.sub_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
     AND a.attendance_date >= '$thirty_days_ago'
     GROUP BY DATE(a.attendance_date)
     ORDER BY date ASC
@@ -154,7 +161,7 @@ if ($attendance_trend_result) {
     }
 }
 
-// 2. Subject Load Distribution (by faculty using role_id)
+// 2. Subject Load Distribution (by faculty)
 $subject_load_query = "
     SELECT 
         COALESCE(u.full_name, 'Unassigned') as faculty_name,
@@ -162,7 +169,6 @@ $subject_load_query = "
     FROM subject s
     LEFT JOIN users u ON s.role_id = u.user_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
     GROUP BY u.user_id, u.full_name
     ORDER BY subject_count DESC
 ";
@@ -174,7 +180,7 @@ if ($subject_load_result) {
     }
 }
 
-// 3. Marks Performance (Subject-wise)
+// 3. Marks Performance (Subject-wise) for the entire course
 $marks_performance_query = "
     SELECT 
         s.sub_name,
@@ -182,7 +188,6 @@ $marks_performance_query = "
     FROM marks m
     JOIN subject s ON m.sub_id = s.sub_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
     GROUP BY m.sub_id, s.sub_name
     ORDER BY avg_percentage DESC
 ";
@@ -202,7 +207,6 @@ $material_trend_query = "
     FROM study_material sm
     JOIN subject s ON sm.subject_id = s.sub_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
     AND sm.upload_date >= '$thirty_days_ago'
     GROUP BY DATE(sm.upload_date)
     ORDER BY date ASC
@@ -223,7 +227,6 @@ $leave_pattern_query = "
     FROM student_leave_requests slr
     JOIN users u ON slr.student_id = u.user_id
     WHERE u.course_id = '$course_id'
-    AND u.sem_id = '$sem_id'
     AND slr.requested_at >= '$thirty_days_ago'
     GROUP BY DATE(slr.requested_at)
     ORDER BY date ASC
@@ -238,6 +241,7 @@ if ($leave_pattern_result) {
 
 // TABLES DATA
 
+// 1. Pending Student Leave Requests
 $pending_leaves_table_query = "
     SELECT 
         slr.leave_id,
@@ -247,11 +251,12 @@ $pending_leaves_table_query = "
         slr.end_date,
         slr.status,
         slr.requested_at,
-        slr.reason
+        slr.reason,
+        sem.sem_name
     FROM student_leave_requests slr
     JOIN users u ON slr.student_id = u.user_id
+    LEFT JOIN semester sem ON u.sem_id = sem.sem_id
     WHERE u.course_id = '$course_id'
-      AND u.sem_id = '$sem_id'
       AND slr.status = 'Pending'
     ORDER BY slr.requested_at DESC
     LIMIT 15
@@ -275,12 +280,13 @@ $recent_materials_query = "
         sm.file_name,
         sm.file_path,
         sm.upload_date,
-        sm.approval_status
+        sm.approval_status,
+        sem.sem_name
     FROM study_material sm
     JOIN subject s ON sm.subject_id = s.sub_id
     JOIN users u ON sm.user_id = u.user_id
+    LEFT JOIN semester sem ON s.sem_id = sem.sem_id
     WHERE s.course_id = '$course_id'
-    AND s.sem_id = '$sem_id'
     ORDER BY sm.upload_date DESC
     LIMIT 15
 ";
@@ -303,7 +309,7 @@ $coordinator_leaves_query = "
         status,
         requested_at
     FROM staff_leave_requests
-    WHERE staff_id = '$coordinator_id'
+    WHERE staff_id = '$coordinator_user_id'
     ORDER BY requested_at DESC
     LIMIT 10
 ";
@@ -314,6 +320,28 @@ if ($coordinator_leaves_result) {
         $coordinator_leaves_data[] = $row;
     }
 }
+
+// Get semester breakdown for additional info
+$semester_breakdown_query = "
+    SELECT 
+        sem.sem_name,
+        COUNT(DISTINCT u.user_id) as student_count,
+        COUNT(DISTINCT s.sub_id) as subject_count
+    FROM semester sem
+    LEFT JOIN users u ON u.sem_id = sem.sem_id AND u.course_id = '$course_id' AND u.role_id = 2 AND u.status = 'Active'
+    LEFT JOIN subject s ON s.sem_id = sem.sem_id AND s.course_id = '$course_id'
+    GROUP BY sem.sem_id, sem.sem_name
+    ORDER BY sem.sem_id ASC
+";
+$semester_breakdown_result = mysqli_query($conn, $semester_breakdown_query);
+$semester_breakdown_data = [];
+if ($semester_breakdown_result) {
+    while($row = mysqli_fetch_assoc($semester_breakdown_result)) {
+        if ($row['student_count'] > 0 || $row['subject_count'] > 0) {
+            $semester_breakdown_data[] = $row;
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -321,7 +349,7 @@ if ($coordinator_leaves_result) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Coordinator Dashboard</title>
+  <title>Coordinator Dashboard - <?php echo htmlspecialchars($course_name); ?></title>
   <link rel="stylesheet" href="../css/all.min.css">
   <link rel="icon" href="../Prime-College-Logo.ico" type="image/x-icon">
   <link rel="stylesheet" href="../css/admin_menu.css">
@@ -333,13 +361,37 @@ if ($coordinator_leaves_result) {
   <?php include("menu.php"); ?>
   
   <div class="dashboard-container">
+    <!-- Coordinator Info Banner -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; margin-bottom: 20px; border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <h2 style="margin: 0 0 10px 0; font-size: 24px;">
+        <i class="fas fa-user-tie"></i> Course Coordinator Dashboard
+      </h2>
+      <div style="display: flex; gap: 30px; flex-wrap: wrap; font-size: 14px;">
+        <div>
+          <strong>Coordinator:</strong> <?php echo htmlspecialchars($coordinator_name); ?>
+        </div>
+        <div>
+          <strong>Course:</strong> <?php echo htmlspecialchars($course_name); ?>
+        </div>
+        <div>
+          <strong>Email:</strong> <?php echo htmlspecialchars($coordinator_email); ?>
+        </div>
+        <div>
+          <strong>Status:</strong> 
+          <span style="background: <?php echo $coordinator_status === 'active' ? '#10b981' : '#ef4444'; ?>; padding: 2px 10px; border-radius: 12px; font-weight: 600;">
+            <?php echo ucfirst($coordinator_status); ?>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- Debug Info (Remove in production) -->
     <?php if (false): // Set to true for debugging ?>
     <div style="background: #fff3cd; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
       <strong>Debug Info:</strong><br>
       Coordinator: <?php echo $coordinator_name; ?><br>
       Course ID: <?php echo $course_id; ?><br>
-      Semester ID: <?php echo $sem_id; ?><br>
+      Course Name: <?php echo $course_name; ?><br>
       Total Subjects: <?php echo $total_subjects; ?><br>
       Total Students: <?php echo $total_students; ?>
     </div>
@@ -398,6 +450,30 @@ if ($coordinator_leaves_result) {
       </div>
     </div>
 
+    <!-- Semester Breakdown Section -->
+    <?php if (count($semester_breakdown_data) > 0): ?>
+    <div style="background: white; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px;">
+        <i class="fas fa-layer-group"></i> Semester Breakdown
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <?php foreach($semester_breakdown_data as $sem): ?>
+        <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+          <div style="font-weight: 600; color: #1f2937; margin-bottom: 8px;">
+            <?php echo htmlspecialchars($sem['sem_name']); ?> Semester
+          </div>
+          <div style="font-size: 13px; color: #6b7280;">
+            <i class="fas fa-users"></i> <?php echo $sem['student_count']; ?> Students
+          </div>
+          <div style="font-size: 13px; color: #6b7280;">
+            <i class="fas fa-book"></i> <?php echo $sem['subject_count']; ?> Subjects
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Section 2: Visual Charts -->
     <div class="charts-row">
       <div class="chart-card large">
@@ -437,9 +513,10 @@ if ($coordinator_leaves_result) {
             <thead>
               <tr>
                 <th>Student Name</th>
+                <th>Semester</th>
                 <th>Leave Type</th>
                 <th>Date Range</th>
-                <th>Subject</th>
+                <th>Reason</th>
                 <th>Status</th>
                 <th>Requested At</th>
               </tr>
@@ -449,9 +526,10 @@ if ($coordinator_leaves_result) {
                 <?php foreach($pending_leaves_table_data as $leave): ?>
                   <tr>
                     <td><?php echo htmlspecialchars($leave['student_name']); ?></td>
+                    <td><?php echo htmlspecialchars($leave['sem_name'] ?? 'N/A'); ?></td>
                     <td><?php echo htmlspecialchars($leave['leave_type']); ?></td>
                     <td><?php echo date('M d', strtotime($leave['start_date'])) . ' - ' . date('M d, Y', strtotime($leave['end_date'])); ?></td>
-                    <td><?php echo htmlspecialchars($leave['sub_name'] ?? 'General'); ?></td>
+                    <td><?php echo htmlspecialchars(substr($leave['reason'], 0, 30)) . (strlen($leave['reason']) > 30 ? '...' : ''); ?></td>
                     <td>
                       <span class="status-badge <?php echo strtolower($leave['status']); ?>">
                         <?php echo ucfirst($leave['status']); ?>
@@ -462,7 +540,7 @@ if ($coordinator_leaves_result) {
                 <?php endforeach; ?>
               <?php else: ?>
                 <tr>
-                  <td colspan="6" style="text-align:center;color:#6b7280;padding:20px;">No pending leave requests.</td>
+                  <td colspan="7" style="text-align:center;color:#6b7280;padding:20px;">No pending leave requests.</td>
                 </tr>
               <?php endif; ?>
             </tbody>
@@ -477,6 +555,7 @@ if ($coordinator_leaves_result) {
             <thead>
               <tr>
                 <th>Subject</th>
+                <th>Semester</th>
                 <th>Uploaded By</th>
                 <th>File Name</th>
                 <th>Upload Date</th>
@@ -488,6 +567,7 @@ if ($coordinator_leaves_result) {
                 <?php foreach($recent_materials_data as $material): ?>
                   <tr>
                     <td><?php echo htmlspecialchars($material['sub_name']); ?></td>
+                    <td><?php echo htmlspecialchars($material['sem_name'] ?? 'N/A'); ?></td>
                     <td>
                       <?php echo htmlspecialchars($material['uploaded_by']); ?>
                       <span class="role-badge">
@@ -505,7 +585,7 @@ if ($coordinator_leaves_result) {
                 <?php endforeach; ?>
               <?php else: ?>
                 <tr>
-                  <td colspan="5" style="text-align:center;color:#6b7280;padding:20px;">No study materials yet.</td>
+                  <td colspan="6" style="text-align:center;color:#6b7280;padding:20px;">No study materials yet.</td>
                 </tr>
               <?php endif; ?>
             </tbody>
