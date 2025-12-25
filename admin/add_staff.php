@@ -19,7 +19,6 @@ if (isset($_POST['add_staff_btn'])) {
     $email    = trim($_POST['email']);
     $pass     = $_POST['password'];
     $gender   = $_POST['gender'];
-    $dob      = $_POST['date_of_birth'];
     $phone    = trim($_POST['contact_number']);
     $address  = trim($_POST['address']);
     $status   = $_POST['status'];
@@ -95,9 +94,11 @@ if (isset($_POST['add_staff_btn'])) {
             
             // NEW: Initialize is_coordinator and coordinator_for
             $is_coordinator = 0;
+            $is_teacher = 0;
             $coordinator_for = 0;
             
             if ($assign_teaching) {
+                $is_teacher = 1;
                 // Validate teaching fields
                 if (empty($_POST['course_name']) || empty($_POST['sem_name'])) {
                     throw new Exception("Please select courses and semesters for teaching assignment.");
@@ -142,8 +143,8 @@ if (isset($_POST['add_staff_btn'])) {
             // Insert basic user information WITH course_name, sem_name, is_coordinator, and coordinator_for
             $insert = $conn->prepare("
                 INSERT INTO users 
-                (full_name, id_number, email, password, role_id, gender, date_of_birth, 
-                 contact_number, address, profile_photo, status, course_name, sem_name, is_coordinator, coordinator_for) 
+                (full_name, id_number, email, password, role_id, gender, 
+                 contact_number, address, profile_photo, status, course_name, sem_name, is_coordinator, is_teacher, coordinator_for) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
@@ -152,14 +153,13 @@ if (isset($_POST['add_staff_btn'])) {
             }
 
             $insert->bind_param(
-                "ssssississsssii",
+                "ssssisisssssiii",
                 $name,
                 $id,
                 $email,
                 $pass,
                 $role,
                 $gender,
-                $dob,
                 $phone,
                 $address,
                 $photo,
@@ -167,6 +167,7 @@ if (isset($_POST['add_staff_btn'])) {
                 $course_name_for_user,
                 $sem_name_for_user,
                 $is_coordinator,
+                $is_teacher,
                 $coordinator_for
             );
 
@@ -698,11 +699,6 @@ if (isset($_POST['add_staff_btn'])) {
           <option value="Other">Other</option>
         </select>
         <div class="error-message" id="gender-error"></div>
-      </div>
-
-      <div>
-        <input type="date" name="date_of_birth" id="date_of_birth" placeholder="Select Date of Birth" required />
-        <div class="error-message" id="date_of_birth-error"></div>
       </div>
 
       <div>

@@ -44,7 +44,7 @@ if ($checkRow['count'] > 0) {
 $sql = "
     SELECT user_id, id_number, full_name
     FROM users
-    WHERE role_id = 2 AND course_id = ? AND sem_id = ?
+    WHERE role_id = 2 AND course_id = ? AND sem_id = ? AND status = 'Active'
     ORDER BY full_name
 ";
 $stmt = $conn->prepare($sql);

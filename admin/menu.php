@@ -254,7 +254,7 @@
   <li><a href="manage_student.php"><i class="fas fa-user-friends"></i> Manage Student</a></li>
   <li><a href="notify_staff.php"><i class="fas fa-bell"></i> Notify Staff</a></li>
   <li><a href="notify_student.php"><i class="fas fa-bell"></i> Notify Student</a></li>
-  <li><a href="view_notification.php"><i class="fas fa-calendar-check"></i> View Notification</a></li>
+  <!-- <li><a href="view_notification.php"><i class="fas fa-calendar-check"></i> View Notification</a></li> -->
   <li><a href="admin_view_attendance.php"><i class="fas fa-calendar-check"></i> View Attendance</a></li>
   <li><a href="view_academic_reports.php"><i class="fas fa-chart-line"></i> Academic Reports</a></li>
   <!-- <li><a href="staff_feedback.php"><i class="fas fa-comments"></i> Staff Feedback</a></li>

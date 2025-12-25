@@ -65,6 +65,7 @@ if ($exam_type_id) {
             AND m.sub_id = ?
             AND m.exam_type_id = ?
         WHERE u.role_id = 2
+        AND u.status = 'Active'
           AND u.course_id = ?
           AND u.sem_id = ?
           AND m.user_id IS NULL

@@ -1,12 +1,27 @@
 <?php
 session_start();
 include("connect.php");
+include("auth_check.php");
+
 if (!isset($_SESSION['uid'])) {
   header("Location: login.php");
   exit();
 }
  
-$faculty_id = $_SESSION['uid'];
+$uid = $_SESSION['uid'];
+$role_id = $_SESSION['type']; // 3 for faculty
+
+// Test if subjects exist using user_id
+$test_query = "SELECT 1 FROM subject WHERE role_id = '$uid' LIMIT 1";
+$test_result = mysqli_query($conn, $test_query);
+
+if (mysqli_num_rows($test_result) > 0) {
+    // Correct mapping: role_id stores user_id
+    $faculty_id = $uid;
+} else {
+    // Fallback mapping: role_id stores faculty role (3)
+    $faculty_id = $role_id;
+}
 
 // Fetch Number of Subjects Faculty Teaches
 $subjects_query = "
@@ -26,6 +41,7 @@ $students_query = "
         AND u.sem_id = s.sem_id
     WHERE s.role_id = '$faculty_id'
       AND u.role_id = 2
+      AND u.status = 'Active'
 ";
 $students_result = mysqli_query($conn, $students_query);
 $total_students = mysqli_fetch_assoc($students_result)['total'];

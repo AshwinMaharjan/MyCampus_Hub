@@ -5,82 +5,197 @@ include("connect.php");
 $notification = null;
 $notification_type = null;
 $redirect_url = null;
-$redirect_delay = 2000; // 2 seconds delay before redirect
+$redirect_delay = 2000;
+$show_role_selector = false;
+$user_data = null;
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    $user_type = $_POST['user_type'];
+    $email = $_POST['email'] ?? null;
+    $password = $_POST['password'] ?? null;
+    $user_type = $_POST['user_type'] ?? null;
 
     $email = mysqli_real_escape_string($conn, $email);
     $password = mysqli_real_escape_string($conn, $password);
     $user_type = mysqli_real_escape_string($conn, $user_type);
 
-    $sql = "SELECT * FROM `users` WHERE email = '$email' AND password = '$password'";
-    $result = mysqli_query($conn, $sql);
-
-    if (mysqli_num_rows($result) > 0) {
-        $data = mysqli_fetch_array($result);
-
-        // Check account status first
-        if (empty($data['status'])) {
-            $notification = "Your account is pending verification. Please wait for approval.";
-            $notification_type = "pending";
-            $redirect_url = "login.php";
-        } elseif (strtolower($data['status']) === 'inactive') {
-            $notification = "Your account has been declined. Please contact administration.";
-            $notification_type = "declined";
-            $redirect_url = "login.php";
-        } elseif (strtolower($data['status']) !== 'active') {
-            $notification = "Your account status is not recognized. Please contact support.";
+    // Handle role selection for faculty with dual roles
+    if (isset($_POST['faculty_role_choice'])) {
+        $faculty_role = $_POST['faculty_role_choice'];
+        $user_id = mysqli_real_escape_string($conn, $_POST['hidden_user_id']);
+        $role_id = mysqli_real_escape_string($conn, $_POST['hidden_role_id']);
+        
+        // Fetch complete user data
+        $user_sql = "SELECT * FROM `users` WHERE user_id = '$user_id'";
+        $user_result = mysqli_query($conn, $user_sql);
+        
+        if ($user_result && mysqli_num_rows($user_result) > 0) {
+            $data = mysqli_fetch_array($user_result);
+            
+            // Set all session variables
+            $_SESSION['uid'] = $data['user_id'];
+            $_SESSION['type'] = $data['role_id'];
+            
+            if ($faculty_role === 'teacher') {
+                $_SESSION['faculty_mode'] = 'teacher';
+                $redirect_url = "faculty/faculty_homepage.php";
+            } else {
+                $_SESSION['faculty_mode'] = 'coordinator';
+                $redirect_url = "non_faculty/non_faculty_homepage.php";
+            }
+            
+            // Handle remember me
+            if (isset($_POST['remember_choice']) && $_POST['remember_choice'] === '1') {
+                setcookie('user_email', $_POST['hidden_email'], time() + (7 * 24 * 60 * 60), "/");
+                setcookie('user_type', $_POST['hidden_user_type'], time() + (7 * 24 * 60 * 60), "/");
+            }
+            
+            $notification = "Welcome back! Login Successful.";
+            $notification_type = "success";
+        } else {
+            $notification = "An error occurred. Please try again.";
             $notification_type = "error";
             $redirect_url = "login.php";
-        } else {
-            // Account is active, now verify user type matches
-            $role_id = $data['role_id'];
-            
-            // Verify the selected user type matches the database
-            $type_matches = false;
-            
-            if ($user_type === 'student' && $role_id == 2) {
-                $type_matches = true;
-                $redirect_url = "student/student_homepage.php";
-            } elseif ($user_type === 'faculty' && $role_id == 3) {
-                // All staff members (role_id = 3) login as faculty
-                // The system will determine their specific role internally
-                $type_matches = true;
-                $redirect_url = "faculty/faculty_homepage.php";
-            } elseif ($user_type === 'admin' && $role_id == 1) {
-                $type_matches = true;
-                $redirect_url = "admin/admin_homepage.php";
-            }
-            
-            if ($type_matches) {
-                // Set session variables
-                $_SESSION['uid'] = $data['user_id'];
-                $_SESSION['type'] = $data['role_id'];
-
-                // Handle remember me checkbox
-                if (isset($_POST['remember'])) {
-                    setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
-                    setcookie('user_type', $user_type, time() + (7 * 24 * 60 * 60), "/");
-                } else {
-                    setcookie('user_email', '', time() - 3600, "/");
-                    setcookie('user_type', '', time() - 3600, "/");
-                }
-
-                $notification = "Welcome back! Login Successful.";
-                $notification_type = "success";
-            } else {
-                $notification = "Invalid user type selected. Please select the correct user type.";
-                $notification_type = "invalid";
-                $redirect_url = "login.php";
-            }
         }
     } else {
-        $notification = "Invalid Email or Password. Please try again.";
-        $notification_type = "invalid";
-        $redirect_url = "login.php";
+        // Normal login process
+        $sql = "SELECT * FROM `users` WHERE email = '$email' AND password = '$password'";
+        $result = mysqli_query($conn, $sql);
+
+        if (mysqli_num_rows($result) > 0) {
+            $data = mysqli_fetch_array($result);
+
+            // Check account status first
+            if (empty($data['status'])) {
+                $notification = "Your account is pending verification. Please wait for approval.";
+                $notification_type = "pending";
+                $redirect_url = "login.php";
+            } elseif (strtolower($data['status']) === 'inactive') {
+                $notification = "Your account has been declined. Please contact administration.";
+                $notification_type = "declined";
+                $redirect_url = "login.php";
+            } elseif (strtolower($data['status']) !== 'active') {
+                $notification = "Your account status is not recognized. Please contact support.";
+                $notification_type = "error";
+                $redirect_url = "login.php";
+            } else {
+                // Account is active, now verify user type matches
+                $role_id = $data['role_id'];
+                $type_matches = false;
+                
+                if ($user_type === 'student' && $role_id == 2) {
+                    $type_matches = true;
+                    $_SESSION['uid'] = $data['user_id'];
+                    $_SESSION['type'] = $data['role_id'];
+                    $redirect_url = "student/student_homepage.php";
+                    
+                    // Handle remember me
+                    if (isset($_POST['remember'])) {
+                        setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
+                        setcookie('user_type', $user_type, time() + (7 * 24 * 60 * 60), "/");
+                    } else {
+                        setcookie('user_email', '', time() - 3600, "/");
+                        setcookie('user_type', '', time() - 3600, "/");
+                    }
+                    
+                    $notification = "Welcome back! Login Successful.";
+                    $notification_type = "success";
+                } elseif ($user_type === 'faculty' && $role_id == 3) {
+                    $type_matches = true;
+                    
+                    // Check is_coordinator and is_teacher flags
+                    $is_coordinator = isset($data['is_coordinator']) ? (int)$data['is_coordinator'] : 0;
+                    $is_teacher = isset($data['is_teacher']) ? (int)$data['is_teacher'] : 0;
+                    
+                    if ($is_coordinator == 1 && $is_teacher == 1) {
+                        // Both roles - show selection modal
+                        $show_role_selector = true;
+                        $user_data = $data;
+                    } elseif ($is_coordinator == 1 && $is_teacher == 0) {
+                        // Coordinator only
+                        $_SESSION['uid'] = $data['user_id'];
+                        $_SESSION['type'] = $data['role_id'];
+                        $_SESSION['faculty_mode'] = 'coordinator';
+                        $redirect_url = "non_faculty/non_faculty_homepage.php";
+                        
+                        // Handle remember me
+                        if (isset($_POST['remember'])) {
+                            setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
+                            setcookie('user_type', $user_type, time() + (7 * 24 * 60 * 60), "/");
+                        } else {
+                            setcookie('user_email', '', time() - 3600, "/");
+                            setcookie('user_type', '', time() - 3600, "/");
+                        }
+                        
+                        $notification = "Welcome back! Login Successful.";
+                        $notification_type = "success";
+                    } elseif ($is_coordinator == 0 && $is_teacher == 1) {
+                        // Teacher only
+                        $_SESSION['uid'] = $data['user_id'];
+                        $_SESSION['type'] = $data['role_id'];
+                        $_SESSION['faculty_mode'] = 'teacher';
+                        $redirect_url = "faculty/faculty_homepage.php";
+                        
+                        // Handle remember me
+                        if (isset($_POST['remember'])) {
+                            setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
+                            setcookie('user_type', $user_type, time() + (7 * 24 * 60 * 60), "/");
+                        } else {
+                            setcookie('user_email', '', time() - 3600, "/");
+                            setcookie('user_type', '', time() - 3600, "/");
+                        }
+                        
+                        $notification = "Welcome back! Login Successful.";
+                        $notification_type = "success";
+                    } else {
+                        // Neither flag is set - default to teacher
+                        $_SESSION['uid'] = $data['user_id'];
+                        $_SESSION['type'] = $data['role_id'];
+                        $_SESSION['faculty_mode'] = 'teacher';
+                        $redirect_url = "faculty/faculty_homepage.php";
+                        
+                        // Handle remember me
+                        if (isset($_POST['remember'])) {
+                            setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
+                            setcookie('user_type', $user_type, time() + (7 * 24 * 60 * 60), "/");
+                        } else {
+                            setcookie('user_email', '', time() - 3600, "/");
+                            setcookie('user_type', '', time() - 3600, "/");
+                        }
+                        
+                        $notification = "Welcome back! Login Successful.";
+                        $notification_type = "success";
+                    }
+                } elseif ($user_type === 'admin' && $role_id == 1) {
+                    $type_matches = true;
+                    $_SESSION['uid'] = $data['user_id'];
+                    $_SESSION['type'] = $data['role_id'];
+                    $redirect_url = "admin/admin_homepage.php";
+                    
+                    // Handle remember me
+                    if (isset($_POST['remember'])) {
+                        setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
+                        setcookie('user_type', $user_type, time() + (7 * 24 * 60 * 60), "/");
+                    } else {
+                        setcookie('user_email', '', time() - 3600, "/");
+                        setcookie('user_type', '', time() - 3600, "/");
+                    }
+                    
+                    $notification = "Welcome back! Login Successful.";
+                    $notification_type = "success";
+                }
+                
+                if (!$type_matches && !$show_role_selector) {
+                    $notification = "Invalid user type selected. Please select the correct user type.";
+                    $notification_type = "invalid";
+                    $redirect_url = "login.php";
+                }
+            }
+        } else {
+            $notification = "Invalid Email or Password. Please try again.";
+            $notification_type = "invalid";
+            $redirect_url = "login.php";
+        }
     }
 }
 ?>
@@ -321,6 +436,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     transform: translateY(-2px);
 }
 
+/* Role Selection Styles */
+.role-selector-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 550px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s ease-out;
+}
+
+.role-selector-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #1f2937;
+}
+
+.role-selector-description {
+    font-size: 16px;
+    color: #6b7280;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.role-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.role-option {
+    flex: 1;
+    padding: 30px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f9fafb;
+}
+
+.role-option:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+}
+
+.role-option.selected {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.role-option-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #3b82f6;
+}
+
+.role-option-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.role-option-description {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.role-submit-button {
+    padding: 12px 40px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.role-submit-button:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+.role-submit-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Responsive Design */
 @media (max-width: 480px) {
     .login-form {
@@ -330,7 +544,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .notification-modal {
         padding: 30px 20px;
     }
+    
+    .role-options {
+        flex-direction: column;
+    }
+    
+    .role-selector-modal {
+        padding: 30px 20px;
+    }
 }
+
 .user-type-container {
     width: 100%;
     margin: 15px 0;
@@ -344,20 +567,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     font-weight: 500;
     color: #000000;
 }
-
     </style>
 </head>
 <body>
 <?php include 'header.php'; ?>
 
 <div class="login-container">
-    <form class="login-form" method="POST" action="">
+    <form class="login-form" method="POST" action="" id="loginForm">
         <h2>Login Form</h2>
         <?php
         $email_cookie = isset($_COOKIE['user_email']) ? $_COOKIE['user_email'] : '';
         $user_type_cookie = isset($_COOKIE['user_type']) ? $_COOKIE['user_type'] : '';
         ?>
-        <input type="email" name="email" placeholder="Email" required value="<?php echo htmlspecialchars($email_cookie); ?>">
+        <input type="email" name="email" placeholder="Email" required value="<?php echo htmlspecialchars($email_cookie); ?>" id="emailInput">
         <input type="password" name="password" placeholder="Password" required>
         
         <div class="user-type-container">
@@ -371,7 +593,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="login-options">
-            <label><input type="checkbox" name="remember" <?php if ($email_cookie) echo "checked"; ?>> Remember me</label>
+            <label><input type="checkbox" name="remember" id="rememberCheckbox" <?php if ($email_cookie) echo "checked"; ?>> Remember me</label>
         </div>
 
         <button type="submit" name="login">Login</button>
@@ -379,8 +601,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </div>
 
+<!-- Role Selection Modal -->
+<?php if ($show_role_selector && $user_data): ?>
+<div class="notification-overlay active" id="roleSelectorOverlay">
+    <div class="role-selector-modal">
+        <div class="role-selector-title">Choose Your Role</div>
+        <div class="role-selector-description">
+            You have multiple roles assigned. Please select how you'd like to proceed:
+        </div>
+        
+        <form method="POST" action="" id="roleSelectionForm">
+            <input type="hidden" name="hidden_user_id" value="<?php echo $user_data['user_id']; ?>">
+            <input type="hidden" name="hidden_role_id" value="<?php echo $user_data['role_id']; ?>">
+            <input type="hidden" name="hidden_email" value="<?php echo htmlspecialchars($email); ?>">
+            <input type="hidden" name="hidden_user_type" value="<?php echo htmlspecialchars($user_type); ?>">
+            <input type="hidden" name="remember_choice" value="<?php echo isset($_POST['remember']) ? '1' : '0'; ?>">
+            <input type="hidden" name="faculty_role_choice" id="facultyRoleChoice" value="">
+            
+            <div class="role-options">
+                <div class="role-option" onclick="selectRole('teacher')">
+                    <div class="role-option-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="role-option-title">Teacher</div>
+                    <div class="role-option-description">
+                        Access teaching features, manage courses, and grade students
+                    </div>
+                </div>
+                
+                <div class="role-option" onclick="selectRole('coordinator')">
+                    <div class="role-option-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div class="role-option-title">Coordinator</div>
+                    <div class="role-option-description">
+                        Manage program coordination, scheduling, and administrative tasks
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="role-submit-button" id="roleSubmitButton" disabled>
+                Continue
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let selectedRole = null;
+    
+    function selectRole(role) {
+        selectedRole = role;
+        document.getElementById('facultyRoleChoice').value = role;
+        
+        // Remove selected class from all options
+        const options = document.querySelectorAll('.role-option');
+        options.forEach(opt => opt.classList.remove('selected'));
+        
+        // Add selected class to clicked option
+        event.currentTarget.classList.add('selected');
+        
+        // Enable submit button
+        document.getElementById('roleSubmitButton').disabled = false;
+    }
+</script>
+<?php endif; ?>
+
 <!-- Notification Modal -->
-<?php if ($notification): ?>
+<?php if ($notification && !$show_role_selector): ?>
 <div class="notification-overlay active" id="notificationOverlay">
     <div class="notification-modal <?php echo $notification_type; ?>">
         <div class="notification-icon">

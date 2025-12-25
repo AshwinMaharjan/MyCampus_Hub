@@ -15,7 +15,7 @@ $redirect_url = null;
 $redirect_delay = 2000;
 
 // Get user's course information (non-faculty assigned to a course)
-$userQuery = "SELECT course_id, course_name FROM users WHERE user_id = ?";
+$userQuery = "SELECT coordinator_for, course_name FROM users WHERE user_id = ?";
 $userStmt = $conn->prepare($userQuery);
 $userStmt->bind_param("i", $staff_id);
 $userStmt->execute();
@@ -23,14 +23,13 @@ $userResult = $userStmt->get_result();
 $userData = $userResult->fetch_assoc();
 $userStmt->close();
 
-if (!$userData || !$userData['course_id']) {
+if (!$userData || !$userData['coordinator_for']) {
     $message = "No course assigned to your account. Please contact administration.";
     $notification_type = "error";
 }
 
-$userCourseId = $userData['course_id'] ?? null;
+$userCourseId = $userData['coordinator_for'] ?? null;
 $userCourseName = $userData['course_name'] ?? null;
-
 // Get filter values
 $filter_semester = isset($_GET['sem_id']) ? intval($_GET['sem_id']) : 0;
 $filter_subject = 0;

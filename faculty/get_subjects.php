@@ -1,5 +1,7 @@
 <?php
 session_start();
+include("auth_check.php");
+
 require_once 'connect.php';
 
 header('Content-Type: application/json; charset=utf-8');

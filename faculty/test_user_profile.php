@@ -1,6 +1,7 @@
 <?php
 session_start();
 include("connect.php"); // your DB connection
+include("auth_check.php");
 
 // Check if user is logged in
 if (!isset($_SESSION['uid'])) {

@@ -63,30 +63,28 @@ while($row = mysqli_fetch_assoc($leave_time_result)) {
     $leave_time_data[] = $row;
 }
 
-// User Composition
-// Count total students
+// User Composition - Fixed
+// Count total active students (role_id = 2)
 $student_query = "SELECT COUNT(*) as students FROM users WHERE role_id = 2 AND status = 'Active'";
 $student_result = mysqli_query($conn, $student_query);
-$student_count = mysqli_fetch_assoc($student_result)['students'];
+$student_count = mysqli_fetch_assoc($student_result)['students'] ?? 0;
 
-// Count teaching staff (any staff with teaching assignments)
-$faculty_query = "SELECT COUNT(DISTINCT staff_id) as faculty FROM staff_teaching_assignments";
+// Count faculty (role_id = 3 and is_teacher = 1)
+$faculty_query = "SELECT COUNT(*) as faculty FROM users WHERE role_id = 3 AND status = 'Active' AND is_teacher = 1";
 $faculty_result = mysqli_query($conn, $faculty_query);
-$faculty_count = mysqli_fetch_assoc($faculty_result)['faculty'];
+$faculty_count = mysqli_fetch_assoc($faculty_result)['faculty'] ?? 0;
 
-// Count non-faculty staff (staff who are coordinator-only)
-$non_faculty_query = "
-    SELECT COUNT(*) as non_faculty 
-    FROM users u 
-    WHERE u.role_id = 3 
-    AND u.status = 'Active' 
-    AND u.user_id IN (
-        SELECT user_id FROM coordinators
-        WHERE user_id NOT IN (SELECT staff_id FROM staff_teaching_assignments)
-    )
-";
-$non_faculty_result = mysqli_query($conn, $non_faculty_query);
-$non_faculty_count = mysqli_fetch_assoc($non_faculty_result)['non_faculty'];
+// Count coordinators (role_id = 3 and is_coordinator = 1)
+$coordinator_query = "SELECT COUNT(*) as coordinators FROM users WHERE role_id = 3 AND status = 'Active' AND is_coordinator = 1";
+$coordinator_result = mysqli_query($conn, $coordinator_query);
+$coordinator_count = mysqli_fetch_assoc($coordinator_result)['coordinators'] ?? 0;
+
+// Create the user_comp array
+$user_comp = [
+    ['label' => 'Students', 'count' => (int)$student_count],
+    ['label' => 'Faculty', 'count' => (int)$faculty_count],
+    ['label' => 'Coordinators', 'count' => (int)$coordinator_count]
+];
 
 // Study Material Upload Trend (Last 7 days)
 $material_trend_query = "SELECT DATE(upload_date) as date, COUNT(*) as count
@@ -330,7 +328,6 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
                 <th>Leave Type</th>
                 <th>Date Range</th>
                 <th>Status</th>
-                <!-- <th>Actions</th> -->
               </tr>
             </thead>
             <tbody>
@@ -345,23 +342,11 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
                         <?php echo ucfirst($leave['status']); ?>
                       </span>
                     </td>
-                    <!-- <td class="action-buttons">
-                      <?php if(strtolower($leave['status']) == 'pending'): ?>
-                        <button class="btn-accept" onclick="handleLeave(<?php echo $leave['leave_id']; ?>, 'Approved')">
-                          <i class="fas fa-check"></i>
-                        </button>
-                        <button class="btn-reject" onclick="handleLeave(<?php echo $leave['leave_id']; ?>, 'Rejected')">
-                          <i class="fas fa-times"></i>
-                        </button>
-                      <?php else: ?>
-                        <span class="text-muted">Processed</span>
-                      <?php endif; ?>
-                    </td> -->
                   </tr>
                 <?php endforeach; ?>
               <?php else: ?>
                 <tr>
-                  <td colspan="5" style="text-align:center;color:#6b7280;padding:20px;">No leave requests yet.</td>
+                  <td colspan="4" style="text-align:center;color:#6b7280;padding:20px;">No leave requests yet.</td>
                 </tr>
               <?php endif; ?>
             </tbody>
@@ -379,46 +364,40 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
                 <th>Full Name</th>
                 <th>File Type</th>
                 <th>Uploaded At</th>
-                <!-- <th>Actions</th> -->
                 <th>Status</th>
-                 
               </tr>
             </thead>
             <tbody>
-              <?php foreach($recent_materials_data as $material): ?>
+              <?php if (count($recent_materials_data) > 0): ?>
+                <?php foreach($recent_materials_data as $material): ?>
+                  <tr>
+                    <td><?php echo htmlspecialchars($material['sub_name']); ?></td>
+                    <td><?php echo htmlspecialchars($material['full_name']); ?></td>
+                    <td>
+                      <span class="file-type-badge">
+                        <?php echo strtoupper($material['material_type']); ?>
+                      </span>
+                    </td>
+                    <td><?php echo date('M d, Y H:i', strtotime($material['upload_date'])); ?></td>
+                    <td>
+                      <span class="status-badge <?php echo strtolower($material['approval_status']); ?>">
+                        <?php echo ucfirst($material['approval_status']); ?>
+                      </span>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php else: ?>
                 <tr>
-                  <td><?php echo htmlspecialchars($material['sub_name']); ?></td>
-                  <td><?php echo htmlspecialchars($material['full_name']); ?></td>
-                  <td>
-                    <span class="file-type-badge">
-                      <?php echo strtoupper($material['material_type']); ?>
-                    </span>
-                  </td>
-                  <td><?php echo date('M d, Y H:i', strtotime($material['upload_date'])); ?></td>
-                  <td>
-  <span class="status-badge <?php echo strtolower($material['approval_status']); ?>">
-    <?php echo ucfirst($material['approval_status']); ?>
-  </span>
-</td>
-
-                  <!-- <td class="action-buttons">
-                    <a href="<?php echo htmlspecialchars($material['file_path']); ?>" 
-                       class="btn-view" target="_blank" title="View">
-                      <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="<?php echo htmlspecialchars($material['file_path']); ?>" 
-                       class="btn-download" download title="Download">
-                      <i class="fas fa-download"></i>
-                    </a>
-                  </td> -->
+                  <td colspan="5" style="text-align:center;color:#6b7280;padding:20px;">No study materials yet.</td>
                 </tr>
-              <?php endforeach; ?>
+              <?php endif; ?>
             </tbody>
           </table>
         </div>
       </div>
     </div>
-    </div>
+  </div>
+  </div>
   </div>
 
   <?php include("footer.php"); ?>
@@ -437,6 +416,9 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
       gradeDist: <?php echo json_encode($grade_dist_data); ?>,
       subjectPerCourse: <?php echo json_encode($subject_per_course_data); ?>
     };
+
+    // Debug: Check if data is loaded
+    console.log('Dashboard Data:', dashboardData);
   </script>
   <script src="../js/admin_dashboard.js"></script>
 </body>

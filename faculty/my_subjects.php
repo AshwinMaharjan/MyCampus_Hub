@@ -23,6 +23,7 @@ $query = "
       FROM users u
       INNER JOIN subject sub_check ON u.course_id = sub_check.course_id AND u.sem_id = sub_check.sem_id
       WHERE u.role_id = 2 /* student */
+        AND u.status = 'Active'
         AND sub_check.sub_id = s.sub_id
         AND sub_check.role_id = ?
     ) AS total_students,
@@ -41,6 +42,7 @@ $query = "
       FROM users u
       INNER JOIN subject sub_check ON u.course_id = sub_check.course_id AND u.sem_id = sub_check.sem_id
       WHERE u.role_id = 2 /* student */
+      AND u.status = 'Active'
         AND sub_check.sub_id = s.sub_id
         AND sub_check.role_id = ?
         AND NOT EXISTS (
@@ -360,12 +362,12 @@ $stmt->close();
               <span class="stat-label">Total Students</span>
             </div>
             <div class="stat-box completed">
-              <span class="stat-number"><?= htmlspecialchars($sub['marks_entered']) ?></span>
-              <span class="stat-label">Marks Entered</span>
+              <!-- <span class="stat-number"><?= htmlspecialchars($sub['marks_entered']) ?></span>
+              <span class="stat-label">Marks Entered</span> -->
             </div>
             <div class="stat-box pending">
               <span class="stat-number"><?= htmlspecialchars($sub['pending_marks']) ?></span>
-              <span class="stat-label">Pending</span>
+              <span class="stat-label">Pending Marks</span>
             </div>
           </div>
 

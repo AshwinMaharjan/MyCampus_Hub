@@ -49,6 +49,7 @@ if ($selectedSubject !== 0 && $subjectInfo) {
         INNER JOIN course c ON u.course_id = c.course_id
         INNER JOIN semester s ON u.sem_id = s.sem_id
         WHERE u.role_id = 2
+          AND u.status = 'Active'
           AND u.course_id = ?
           AND u.sem_id = ?
         ORDER BY u.full_name ASC

@@ -1,6 +1,8 @@
 <?php
 include("connect.php");
 session_start();
+include("auth_check.php");
+
 
 // Get the logged-in user's ID from session
 $user_id = $_SESSION['user_id'] ?? null;

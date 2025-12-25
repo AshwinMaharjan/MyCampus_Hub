@@ -9,21 +9,45 @@ if (!isset($_SESSION['uid'])) {
 }
 
 $userId = $_SESSION['uid'];
+$errorMessage = null;
 
-// Get user's course and semester information
-$userQuery = "SELECT course_id, sem_id, course_name, sem_name FROM users WHERE user_id = ?";
+// Get user's course and semester information with better error handling
+$userQuery = "
+SELECT 
+    u.user_id,
+    u.full_name,
+    u.email,
+    u.role_id,
+    u.course_id,
+    u.sem_id,
+    u.coordinator_for,
+    c.course_name,
+    sem.sem_name
+FROM users u
+LEFT JOIN course c ON u.coordinator_for = c.course_id
+LEFT JOIN semester sem ON u.sem_id = sem.sem_id
+WHERE u.user_id = ?
+";
+
 $userStmt = $conn->prepare($userQuery);
+if (!$userStmt) {
+    die("Prepare failed: " . $conn->error);
+}
+
 $userStmt->bind_param("i", $userId);
 $userStmt->execute();
 $userResult = $userStmt->get_result();
 $userData = $userResult->fetch_assoc();
 $userStmt->close();
 
-if (!$userData || !$userData['course_id']) {
-    $errorMessage = "No course assigned to your account. Please contact administration.";
+// Debug: Check what data we got
+$userCourseId = $userData['coordinator_for'] ?? null;
+if (!$userData) {
+    $errorMessage = "User account not found. User ID: " . $userId;
+} elseif (is_null($userCourseId) || empty($userCourseId)) {
+    $errorMessage = "No course assigned to your account. Please contact administration to assign you to a course.";
 }
 
-$userCourseId = $userData['course_id'] ?? null;
 $userSemId = $userData['sem_id'] ?? null;
 
 // Get filter parameters
@@ -34,59 +58,69 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 $semesterQuery = "SELECT DISTINCT sem_id, sem_name FROM semester ORDER BY sem_id";
 $semesterResult = $conn->query($semesterQuery);
 $semesters = [];
-while ($row = $semesterResult->fetch_assoc()) {
-    $semesters[] = $row;
+if ($semesterResult) {
+    while ($row = $semesterResult->fetch_assoc()) {
+        $semesters[] = $row;
+    }
 }
-
-// Build the main query with filters
-$query = "
-    SELECT 
-        s.sub_id,
-        s.sub_name,
-        s.course_id,
-        s.sem_id,
-        c.course_name,
-        sem.sem_name,
-        CONCAT(u.full_name) AS staff_name,
-        u.profile_photo AS staff_photo
-    FROM subject s
-    LEFT JOIN course c ON s.course_id = c.course_id
-    LEFT JOIN semester sem ON s.sem_id = sem.sem_id
-    LEFT JOIN users u ON s.role_id = u.user_id AND u.role_id = 3
-    WHERE s.course_id = ?
-";
-
-$params = [$userCourseId];
-$types = "i";
-
-// Add semester filter
-if ($filterSemester !== '') {
-    $query .= " AND s.sem_id = ?";
-    $params[] = $filterSemester;
-    $types .= "i";
-}
-
-// Add search filter
-if ($searchQuery !== '') {
-    $query .= " AND s.sub_name LIKE ?";
-    $params[] = "%$searchQuery%";
-    $types .= "s";
-}
-
-$query .= " ORDER BY s.sem_id, s.sub_name";
-
-$stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$result = $stmt->get_result();
 
 $subjects = [];
-while ($row = $result->fetch_assoc()) {
-    $subjects[] = $row;
+
+// Only fetch subjects if we have a valid course ID
+if ($userCourseId) {
+    // Build the main query with filters
+    $query = "
+        SELECT 
+            s.sub_id,
+            s.sub_name,
+            s.course_id,
+            s.sem_id,
+            c.course_name,
+            sem.sem_name,
+            CONCAT(u.full_name) AS staff_name,
+            u.profile_photo AS staff_photo
+        FROM subject s
+        LEFT JOIN course c ON s.course_id = c.course_id
+        LEFT JOIN semester sem ON s.sem_id = sem.sem_id
+        LEFT JOIN users u ON s.role_id = u.user_id AND u.role_id = 3
+        WHERE s.course_id = ?
+    ";
+
+    $params = [$userCourseId];
+    $types = "i";
+
+    // Add semester filter
+    if ($filterSemester !== '') {
+        $query .= " AND s.sem_id = ?";
+        $params[] = $filterSemester;
+        $types .= "i";
+    }
+
+    // Add search filter
+    if ($searchQuery !== '') {
+        $query .= " AND s.sub_name LIKE ?";
+        $params[] = "%$searchQuery%";
+        $types .= "s";
+    }
+
+    $query .= " ORDER BY s.sem_id, s.sub_name";
+
+    $stmt = $conn->prepare($query);
+    if ($stmt) {
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        while ($row = $result->fetch_assoc()) {
+            $subjects[] = $row;
+        }
+        $stmt->close();
+    } else {
+        $errorMessage = "Error preparing subject query: " . $conn->error;
+    }
 }
-$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -402,49 +436,49 @@ $stmt->close();
             color: #666;
             margin-bottom: 3px;
         }
-.subject-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: nowrap; /* Prevent wrapping */
-    justify-content: flex-start; /* Align buttons to left; use center or space-between if needed */
-    margin-top: 10px;
-}
 
-.subject-actions .action-btn {
-    flex: 1; /* Make buttons equal width and fit in one line */
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Center icon + text */
-    gap: 8px;
-    padding: 10px 6px;
-    border-radius: 6px;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.subject-actions .action-btn i {
-    font-size: 16px;
-}
+        .subject-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            margin-top: 10px;
+        }
 
-/* Specific button colors */
-.subject-actions .marks-btn {
-    background-color: #2196F3;
-}
+        .subject-actions .action-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 6px;
+            border-radius: 6px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-.subject-actions .attendance-btn {
-    background-color: #4CAF50;
-}
+        .subject-actions .action-btn i {
+            font-size: 16px;
+        }
 
-.subject-actions .students-btn {
-    background-color: #FF9800;
-}
+        .subject-actions .marks-btn {
+            background-color: #2196F3;
+        }
 
-/* Hover effects */
-.subject-actions .action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
+        .subject-actions .attendance-btn {
+            background-color: #4CAF50;
+        }
+
+        .subject-actions .students-btn {
+            background-color: #FF9800;
+        }
+
+        .subject-actions .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
 
         .staff-name {
             font-weight: 600;
@@ -494,6 +528,25 @@ $stmt->close();
 
         .error-message i {
             font-size: 2em;
+        }
+
+        .error-content {
+            flex: 1;
+        }
+
+        .error-content strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.9em;
         }
 
         .results-count {
@@ -562,14 +615,29 @@ $stmt->close();
 <?php include("menu.php"); ?>
 
 <div class="main-content">
-    <?php if (isset($errorMessage)): ?>
+    <?php if ($errorMessage): ?>
         <div class="error-message">
             <i class="fas fa-exclamation-triangle"></i>
-            <div>
+            <div class="error-content">
                 <strong>Error:</strong> <?= htmlspecialchars($errorMessage) ?>
+                
+                <!-- Debug Information -->
+                <?php if ($userData): ?>
+                <div class="debug-info">
+                    <strong>Debug Information:</strong><br>
+                    User ID: <?= htmlspecialchars($userData['user_id'] ?? 'N/A') ?><br>
+                    Name: <?= htmlspecialchars($userData['full_name'] ?? 'N/A') ?><br>
+                    Email: <?= htmlspecialchars($userData['email'] ?? 'N/A') ?><br>
+                    Role ID: <?= htmlspecialchars($userData['role_id'] ?? 'N/A') ?><br>
+                    Course ID: <?= htmlspecialchars($userData['course_id'] ?? 'NULL') ?><br>
+                    Semester ID: <?= htmlspecialchars($userData['sem_id'] ?? 'NULL') ?>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
-    <?php else: ?>
+    <?php endif; ?>
+
+    <?php if ($userCourseId): ?>
         <div class="page-header">
             <h1>
                 <i class="fas fa-book-open"></i>
@@ -578,9 +646,9 @@ $stmt->close();
             <div class="course-info">
                 <div class="course-info-item">
                     <i class="fas fa-graduation-cap"></i>
-                    <strong>Course:</strong> <?= htmlspecialchars($userData['course_name']) ?>
+                    <strong>Course:</strong> <?= htmlspecialchars($userData['course_name'] ?? 'N/A') ?>
                 </div>
-                <?php if ($userData['sem_name']): ?>
+                <?php if (!empty($userData['sem_name'])): ?>
                     <div class="course-info-item">
                         <i class="fas fa-calendar-alt"></i>
                         <strong>Current Semester:</strong> <?= htmlspecialchars($userData['sem_name']) ?>
@@ -608,14 +676,14 @@ $stmt->close();
                     </div>
 
                     <div class="filter-group search-box">
-                        <label for="search">Search Subjects
-                        </label>
+                        <label for="search">Search Subjects</label>
                         <input type="text" 
                                name="search" 
                                id="search" 
                                placeholder="Enter subject name..."
                                value="<?= htmlspecialchars($searchQuery) ?>">
                     </div>
+
                     <div class="filter-group">
                         <label>&nbsp;</label>
                         <button type="submit" class="btn-filter">
@@ -623,7 +691,6 @@ $stmt->close();
                             Apply Filters
                         </button>
                     </div>
-
 
                     <div class="filter-group">
                         <label>&nbsp;</label>
@@ -738,6 +805,7 @@ $stmt->close();
             </div>
         <?php endif; ?>
     <?php endif; ?>
+</div>
 </div>
 </div>
 

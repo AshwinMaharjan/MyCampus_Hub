@@ -1,6 +1,8 @@
 <?php
 session_start();
 include("connect.php");
+include("auth_check.php");
+
 
 if (!isset($_SESSION['uid'])) {
     header("Location: login.php");
@@ -168,6 +170,7 @@ $subject_load_query = "
         COUNT(s.sub_id) as subject_count
     FROM subject s
     LEFT JOIN users u ON s.role_id = u.user_id
+    AND u.role_id = 3   -- ONLY teachers
     WHERE s.course_id = '$course_id'
     GROUP BY u.user_id, u.full_name
     ORDER BY subject_count DESC

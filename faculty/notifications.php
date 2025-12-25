@@ -1,5 +1,7 @@
 <?php
 session_start();
+include("auth_check.php");
+
 include("connect.php");
 if (!isset($_SESSION['uid'])) {
     header("Location: ../login.php");

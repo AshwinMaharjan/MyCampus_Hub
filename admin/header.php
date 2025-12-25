@@ -230,7 +230,7 @@
 
     <nav class="nav-icons">
       <!-- Notification Icon -->
-      <a href="notifications.php" class="nav-icon">
+      <a href="view_notification.php" class="nav-icon">
         <i class="fas fa-bell"></i>
       </a>
 
