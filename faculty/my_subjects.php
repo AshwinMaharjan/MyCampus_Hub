@@ -356,21 +356,21 @@ $stmt->close();
             </div>
           </div>
 
-          <div class="stats-container">
+          <!-- <div class="stats-container">
             <div class="stat-box">
               <span class="stat-number"><?= htmlspecialchars($sub['total_students']) ?></span>
               <span class="stat-label">Total Students</span>
             </div>
             <div class="stat-box completed">
-              <!-- <span class="stat-number"><?= htmlspecialchars($sub['marks_entered']) ?></span>
-              <span class="stat-label">Marks Entered</span> -->
+              <span class="stat-number"><?= htmlspecialchars($sub['marks_entered']) ?></span>
+              <span class="stat-label">Marks Entered</span>
             </div>
             <div class="stat-box pending">
               <span class="stat-number"><?= htmlspecialchars($sub['pending_marks']) ?></span>
               <span class="stat-label">Pending Marks</span>
             </div>
           </div>
-
+ -->
           <div class="subject-actions">
             <a href="view_marks.php?sub_id=<?= $sub['sub_id'] ?>" class="action-btn marks-btn">
               <i class="fas fa-chart-line"></i>
