@@ -198,22 +198,57 @@ $present_count = 0;
 $absent_count = 0;
 $late_count = 0;
 
+// Calculate filtered average attendance %
+$studentStats = [];
+
 foreach ($attendanceRecords as $record) {
+    $uid = $record['user_id'];
+
+    if (!isset($studentStats[$uid])) {
+        $studentStats[$uid] = [
+            'present' => 0,
+            'late' => 0,
+            'total' => 0
+        ];
+    }
+
+    // Count totals
+    $studentStats[$uid]['total']++;
+
     switch ($record['status']) {
         case 'Present':
+            $studentStats[$uid]['present']++;
             $present_count++;
             break;
+
+        case 'Late':
+            $studentStats[$uid]['late']++;
+            $late_count++;
+            break;
+
         case 'Absent':
             $absent_count++;
-            break;
-        case 'Late':
-            $late_count++;
             break;
     }
 }
 
-$attendance_percentage = $totalRecords > 0 
-    ? round((($present_count + $late_count) / $totalRecords) * 100, 2) 
+$sumPercentages = 0;
+$studentCount = 0;
+
+foreach ($studentStats as $stats) {
+    if ($stats['total'] > 0) {
+
+        // Late = 0.5
+        $attendanceScore = $stats['present'] + ($stats['late'] * 0.5);
+
+        $percentage = ($attendanceScore / $stats['total']) * 100;
+        $sumPercentages += $percentage;
+        $studentCount++;
+    }
+}
+
+$avgPercentage = $studentCount > 0
+    ? round($sumPercentages / $studentCount, 2)
     : 0;
 ?>
 

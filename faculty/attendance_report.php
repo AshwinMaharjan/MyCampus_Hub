@@ -3,6 +3,8 @@ session_start();
 include("auth_check.php");
 include("connect.php");
 
+define('LATE_WEIGHT', 0.5);
+
 if (!isset($_SESSION['uid'])) {
     header("Location: ../login.php");
     exit();
@@ -122,19 +124,24 @@ foreach ($reportData as $row) {
     $total_present += $row['present_count'];
     $total_absent += $row['absent_count'];
     $total_late += $row['late_count'];
-    
-    $percentage = $row['total_classes'] > 0 
-        ? round((($row['present_count'] + $row['late_count']) / $row['total_classes']) * 100, 2)
+
+    // ✅ FIXED calculation
+    $attendanceScore =
+        $row['present_count'] +
+        ($row['late_count'] * LATE_WEIGHT);
+
+    $percentage = $row['total_classes'] > 0
+        ? round(($attendanceScore / $row['total_classes']) * 100, 2)
         : 0;
-    
+
     $student_percentages[] = [
         'name' => $row['full_name'],
         'percentage' => $percentage
     ];
 }
 
-$overall_percentage = $total_classes_sum > 0 
-    ? round((($total_present + $total_late) / $total_classes_sum) * 100, 2)
+$overall_percentage = $total_classes_sum > 0
+    ? round((($total_present + ($total_late * LATE_WEIGHT)) / $total_classes_sum) * 100, 2)
     : 0;
 
 $average_attendance = $total_students > 0 
@@ -347,7 +354,7 @@ $worst_students = array_slice(array_reverse($student_percentages), 0, 3);
             <div class="table-title">
                 <i class="fas fa-table"></i>
                 Detailed Report
-            </div>
+            </div> 
             <div class="search-box">
                 <input type="text" class="search-input" id="searchInput" placeholder="Search by student name or ID...">
             </div>
@@ -372,9 +379,13 @@ $worst_students = array_slice(array_reverse($student_percentages), 0, 3);
                 </thead>
                 <tbody id="reportTableBody">
                     <?php foreach ($reportData as $i => $row): 
-                        $percentage = $row['total_classes'] > 0 
-                            ? round((($row['present_count'] + $row['late_count']) / $row['total_classes']) * 100, 1)
-                            : 0;
+$attendanceScore =
+    $row['present_count'] +
+    ($row['late_count'] * LATE_WEIGHT);
+
+$percentage = $row['total_classes'] > 0
+    ? round(($attendanceScore / $row['total_classes']) * 100, 1)
+    : 0;
                         $badge_class = $percentage >= 90 ? 'excellent' : ($percentage >= 75 ? 'good' : ($percentage >= 60 ? 'average' : 'poor'));
                     ?>
                     <tr class="report-row" 
