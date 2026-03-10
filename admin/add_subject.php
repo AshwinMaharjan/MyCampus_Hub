@@ -10,7 +10,6 @@ $notification = null;
 $notification_type = null;
 $redirect_delay = 2000;
 
-// Fetch dropdown data
 $semesterList = [];
 $semesterResult = $conn->query("SELECT sem_id, sem_name FROM semester ORDER BY sem_name");
 if ($semesterResult) {
@@ -42,10 +41,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sem_id = $_POST["sem_id"];
     $marks_id = $_POST["marks_id"] ?? null;
 
-    // Basic validation
     if (!empty($subject_name) && !empty($staff_id) && !empty($course_id) && !empty($sem_id)) {
         
-        // Check if subject already exists
         $checkQuery = "SELECT sub_id FROM subject WHERE sub_name = ? AND course_id = ? AND sem_id = ?";
         $check = $conn->prepare($checkQuery);
         $check->bind_param("sii", $subject_name, $course_id, $sem_id);
@@ -56,9 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $notification = "This subject already exists for the selected course.";
             $notification_type = "error";
         } else {
-            // Insert statement including marks_id if it is used
             if ($marks_id === null || $marks_id === "") {
-                // If marks_id is nullable, exclude it
                 $stmt = $conn->prepare("INSERT INTO subject (sub_name, role_id, course_id, sem_id) VALUES (?, ?, ?, ?)");
                 $stmt->bind_param("siii", $subject_name, $staff_id, $course_id, $sem_id);
             } else {
@@ -94,7 +89,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    /* Extra minor styling for selects to match inputs */
     select {
       width: 100%;
       padding: 12px 15px;
@@ -401,7 +395,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </div>
 
 <script>
-// Load existing subjects directly from PHP
 let existingSubjects = [
     <?php 
     $subjectQuery = "SELECT DISTINCT sub_name FROM subject ORDER BY sub_name";
@@ -418,7 +411,6 @@ let existingSubjects = [
 
 console.log('Existing subjects loaded:', existingSubjects); // Debug line
 
-// Subject name validation - check for duplicates
 document.querySelector('form').addEventListener('submit', function(e) {
     const subjectNameInput = document.querySelector('input[name="subject_name"]');
     const subjectName = subjectNameInput.value.trim().toLowerCase();
@@ -426,7 +418,6 @@ document.querySelector('form').addEventListener('submit', function(e) {
     console.log('Checking subject:', subjectName); // Debug line
     console.log('Exists?', existingSubjects.includes(subjectName)); // Debug line
     
-    // Check if subject name already exists
     if (existingSubjects.includes(subjectName)) {
         e.preventDefault(); // Prevent form submission
         showValidationError('This subject already exists in the system. Please enter a different subject name.');
@@ -435,7 +426,6 @@ document.querySelector('form').addEventListener('submit', function(e) {
 });
 
 function showValidationError(message) {
-    // Create notification overlay if it doesn't exist
     let overlay = document.getElementById('notificationOverlay');
     
     if (!overlay) {
@@ -445,7 +435,6 @@ function showValidationError(message) {
         document.body.appendChild(overlay);
     }
     
-    // Set notification content
     overlay.innerHTML = `
         <div class="notification-modal invalid">
             <div class="notification-icon">
@@ -460,10 +449,8 @@ function showValidationError(message) {
         </div>
     `;
     
-    // Show overlay
     overlay.classList.add('active');
     
-    // Auto-close after 3 seconds
     setTimeout(() => {
         closeValidationNotification();
     }, 3000);
@@ -478,7 +465,6 @@ function closeValidationNotification() {
         }, 300);
     }
 }
-// Subject name validation - check for numbers and duplicates
 document.querySelector('form').addEventListener('submit', function(e) {
     const subjectNameInput = document.querySelector('input[name="subject_name"]');
     const subjectName = subjectNameInput.value.trim();
@@ -486,7 +472,6 @@ document.querySelector('form').addEventListener('submit', function(e) {
     
     console.log('Checking subject:', subjectNameLower); // Debug line
     
-    // Check if subject name contains any numbers
     const hasNumbers = /\d/.test(subjectName);
     
     if (hasNumbers) {
@@ -495,7 +480,6 @@ document.querySelector('form').addEventListener('submit', function(e) {
         return false;
     }
     
-    // Check if subject name already exists
     if (existingSubjects.includes(subjectNameLower)) {
         e.preventDefault(); // Prevent form submission
         showValidationError('This subject already exists in the system. Please enter a different subject name.');
@@ -510,7 +494,6 @@ function closeNotification() {
     }, 300);
 }
 
-// Auto-close PHP notification after 2 seconds
 <?php if ($notification): ?>
 setTimeout(() => {
     closeNotification();

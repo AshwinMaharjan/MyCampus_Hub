@@ -22,19 +22,16 @@ if (isset($_POST['add_staff_btn'])) {
     $phone    = trim($_POST['contact_number']);
     $address  = trim($_POST['address']);
     $status   = $_POST['status'];
-    $role     = 3; // Staff role
+    $role     = 3; 
     
-    // Check which responsibilities are selected
     $assign_teaching = isset($_POST['assign_teaching']) ? 1 : 0;
     $assign_coordinator = isset($_POST['assign_coordinator']) ? 1 : 0;
 
-    // Validate that at least one responsibility is selected
     if (!$assign_teaching && !$assign_coordinator) {
         $notification = "Please assign at least one responsibility (Teaching or Coordinator).";
         $notification_type = "error";
     }
     
-    // Check for existing email or ID
     if (empty($notification)) {
         $check = $conn->prepare("SELECT * FROM users WHERE email=? OR id_number=?");
         $check->bind_param("ss", $email, $id);
@@ -48,7 +45,6 @@ if (isset($_POST['add_staff_btn'])) {
         $check->close();
     }
 
-    // Handle profile photo upload
     if (empty($notification)) {
         $photo = '';
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] == 0) {
@@ -83,52 +79,41 @@ if (isset($_POST['add_staff_btn'])) {
         }
     }
 
-    // Process the form if no errors
     if (empty($notification)) {
         $conn->begin_transaction();
 
         try {
-            // Get course_name and sem_name (store ALL selected as comma-separated)
             $course_name_for_user = null;
             $sem_name_for_user = null;
             
-            // NEW: Initialize is_coordinator and coordinator_for
             $is_coordinator = 0;
             $is_teacher = 0;
             $coordinator_for = 0;
             
             if ($assign_teaching) {
                 $is_teacher = 1;
-                // Validate teaching fields
                 if (empty($_POST['course_name']) || empty($_POST['sem_name'])) {
                     throw new Exception("Please select courses and semesters for teaching assignment.");
                 }
 
-                // Get ALL selected courses and semesters
                 $selectedCourses = $_POST['course_name'];
                 $selectedSemesters = $_POST['sem_name'];
                 
-                // Store ALL selected course names as comma-separated string
                 $course_name_for_user = implode(', ', $selectedCourses);
                 
-                // Store ALL selected semester names as comma-separated string
                 $sem_name_for_user = implode(', ', $selectedSemesters);
                 
             } elseif ($assign_coordinator) {
-                // If only coordinator, get course_name from coordinator selection
                 $course_name_for_user = $_POST['coordinator_course'];
                 
-                // sem_name remains NULL for coordinator-only staff
             }
 
-            // NEW: Set is_coordinator and coordinator_for based on coordinator assignment
             if ($assign_coordinator) {
                 $is_coordinator = 1;
                 
                 if (!empty($_POST['coordinator_course'])) {
                     $coordinator_course_name = $_POST['coordinator_course'];
                     
-                    // Get course_id for coordinator_for column
                     $coordCourseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
                     $coordCourseQuery->bind_param("s", $coordinator_course_name);
                     $coordCourseQuery->execute();
@@ -140,7 +125,6 @@ if (isset($_POST['add_staff_btn'])) {
                 }
             }
 
-            // Insert basic user information WITH course_name, sem_name, is_coordinator, and coordinator_for
             $insert = $conn->prepare("
                 INSERT INTO users 
                 (full_name, id_number, email, password, role_id, gender, 
@@ -178,12 +162,10 @@ if (isset($_POST['add_staff_btn'])) {
             $user_id = $conn->insert_id;
             $insert->close();
 
-            // Handle Teaching Assignment
             if ($assign_teaching) {
                 $selectedCourses = $_POST['course_name'];
                 $selectedSemesters = $_POST['sem_name'];
 
-                // Insert into staff_teaching_assignments table
                 $insertTeaching = $conn->prepare("
                     INSERT INTO staff_teaching_assignments 
                     (staff_id, course_id, sem_id, sub_id) 
@@ -195,7 +177,6 @@ if (isset($_POST['add_staff_btn'])) {
                 }
 
                 foreach ($selectedCourses as $courseName) {
-                    // Get course_id
                     $courseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
                     $courseQuery->bind_param("s", $courseName);
                     $courseQuery->execute();
@@ -207,7 +188,6 @@ if (isset($_POST['add_staff_btn'])) {
                     $courseQuery->close();
 
                     foreach ($selectedSemesters as $semName) {
-                        // Get sem_id
                         $semQuery = $conn->prepare("SELECT sem_id FROM semester WHERE sem_name = ?");
                         $semQuery->bind_param("s", $semName);
                         $semQuery->execute();
@@ -218,8 +198,7 @@ if (isset($_POST['add_staff_btn'])) {
                         }
                         $semQuery->close();
 
-                        // Insert the teaching assignment
-                        $sub_id = null; // Set to null or get from form if applicable
+                        $sub_id = null; 
                         $insertTeaching->bind_param("iiii", $user_id, $course_id, $sem_id, $sub_id);
                         
                         if (!$insertTeaching->execute()) {
@@ -230,7 +209,6 @@ if (isset($_POST['add_staff_btn'])) {
                 $insertTeaching->close();
             }
 
-            // Handle Coordinator Assignment
             if ($assign_coordinator) {
                 if (empty($_POST['coordinator_course'])) {
                     throw new Exception("Please select a course for coordinator assignment.");
@@ -238,7 +216,6 @@ if (isset($_POST['add_staff_btn'])) {
 
                 $coordinator_course_name = $_POST['coordinator_course'];
                 
-                // Get course ID
                 $courseQuery = $conn->prepare("SELECT course_id FROM course WHERE course_name = ?");
                 $courseQuery->bind_param("s", $coordinator_course_name);
                 $courseQuery->execute();
@@ -248,7 +225,6 @@ if (isset($_POST['add_staff_btn'])) {
                 }
                 $courseQuery->close();
 
-                // Insert into coordinators table
                 $insertCoordinator = $conn->prepare("
                     INSERT INTO coordinators 
                     (user_id, coordinator_for, full_name, email, contact_number, status) 
@@ -857,7 +833,6 @@ if (isset($_POST['add_staff_btn'])) {
 <?php endif; ?>
 
 <script>
-// Toggle responsibility fields
 document.addEventListener('DOMContentLoaded', function() {
     const teachingCheckbox = document.getElementById('assign_teaching');
     const coordinatorCheckbox = document.getElementById('assign_coordinator');

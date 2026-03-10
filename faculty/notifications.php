@@ -15,12 +15,13 @@ if (!isset($_SESSION['uid'])) {
   <title>View Notifications</title>
   <link rel="stylesheet" href="../css/all.min.css" />
   <link rel="stylesheet" href="../css/admin_menu.css" />
-  <link rel="stylesheet" href="../css/notify_staff.css" />
+  <link rel="stylesheet" href="../css/notify_student.css" />
   <link rel="icon" href="../Prime-College-Logo.ico" type="image/x-icon">
 </head>
 <body>
 
 <?php include("header.php"); ?>
+<div class="page-wrapper">
 <?php include("menu.php"); ?>
 
 <div class="main-content">
@@ -61,6 +62,8 @@ while ($row = $result->fetch_assoc()) {
 ?>
     </tbody>
   </table>
+  </div>
+  </div>
   </div>
   </div>
 

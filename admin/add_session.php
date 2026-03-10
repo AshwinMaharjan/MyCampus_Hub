@@ -353,7 +353,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }, 300);
     }
 
-    // Auto-close after 2 seconds
     setTimeout(() => {
         closeNotification();
     }, <?php echo $redirect_delay; ?>);
