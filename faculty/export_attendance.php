@@ -131,20 +131,15 @@ if ($reportStmt) {
     die("Error preparing report query.");
 }
 
-// Generate dynamic filename
 $filename = "attendance_report_{$course_name}_{$semester_name}_{$subject_name}_{$date_part}.csv";
 
-// Set CSV headers for Excel with UTF-8 BOM for proper encoding
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=' . $filename);
 
-// Open output stream
 $output = fopen('php://output', 'w');
 
-// Add UTF-8 BOM for Excel to recognize encoding properly
 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-// Column headers only
 fputcsv($output, [
     'Student ID',
     'Student Name',
@@ -158,7 +153,6 @@ fputcsv($output, [
     'Attendance %'
 ]);
 
-// Populate CSV rows
 foreach ($reportData as $row) {
     $percentage = $row['total_classes'] > 0 
         ? round((($row['present_count'] + $row['late_count']) / $row['total_classes']) * 100, 2)

@@ -104,9 +104,13 @@ foreach ($allRecords as $record) {
     }
 }
 
-$attendance_percentage = $total_records > 0 
-    ? round((($present_count + $late_count) / $total_records) * 100, 2) 
+// Attendance calculation (Late = 0.5)
+$effective_attendance = ($present_count * 1) + ($late_count * 0.5);
+
+$attendance_percentage = $total_records > 0
+    ? round(($effective_attendance / $total_records) * 100, 2)
     : 0;
+
 
 // Pagination setup
 $limit = 10;

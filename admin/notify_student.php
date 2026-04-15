@@ -16,6 +16,7 @@ $selected_course = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
 $selected_semester = isset($_GET['sem_id']) ? intval($_GET['sem_id']) : 0;
 $search_submitted = isset($_GET['search_submitted']) ? true : false;
 
+// Handle individual student notification
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['message'], $_POST['user_id'])) {
     $user_id = intval($_POST['user_id']);
     $message = trim($_POST['message']);
@@ -31,6 +32,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['message'], $_POST['use
             $notification_type = "error";
         }
         $stmt->close();
+    }
+}
+
+// Handle bulk notification
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['bulk_message'], $_POST['notification_type'])) {
+    $bulk_message = trim($_POST['bulk_message']);
+    $notif_type = $_POST['notification_type'];
+    $bulk_course = isset($_POST['bulk_course_id']) ? intval($_POST['bulk_course_id']) : 0;
+    $bulk_semester = isset($_POST['bulk_sem_id']) ? intval($_POST['bulk_sem_id']) : 0;
+
+    if (!empty($bulk_message)) {
+        // Build query to get target students
+        $target_query = "SELECT user_id FROM users WHERE role_id = 2 AND status = 'Active'";
+        
+        if ($notif_type == 'course' && $bulk_course > 0) {
+            $target_query .= " AND course_id = $bulk_course";
+        } elseif ($notif_type == 'semester' && $bulk_semester > 0) {
+            $target_query .= " AND sem_id = $bulk_semester";
+        } elseif ($notif_type == 'course_semester' && $bulk_course > 0 && $bulk_semester > 0) {
+            $target_query .= " AND course_id = $bulk_course AND sem_id = $bulk_semester";
+        }
+        
+        $target_result = $conn->query($target_query);
+        
+        if ($target_result && $target_result->num_rows > 0) {
+            $success_count = 0;
+            $fail_count = 0;
+            
+            $stmt = $conn->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+            
+            while ($student = $target_result->fetch_assoc()) {
+                $stmt->bind_param("is", $student['user_id'], $bulk_message);
+                if ($stmt->execute()) {
+                    $success_count++;
+                } else {
+                    $fail_count++;
+                }
+            }
+            
+            $stmt->close();
+            
+            if ($success_count > 0) {
+                $notification = "Successfully notified $success_count student(s)!";
+                $notification_type = "success";
+                if ($fail_count > 0) {
+                    $notification .= " ($fail_count failed)";
+                }
+            } else {
+                $notification = "Failed to send notifications.";
+                $notification_type = "error";
+            }
+        } else {
+            $notification = "No students found matching the criteria.";
+            $notification_type = "error";
+        }
     }
 }
 
@@ -83,7 +139,153 @@ $students_on_page = $result->num_rows;
   <link rel="stylesheet" href="../css/admin_menu.css" />
   <link rel="stylesheet" href="../css/notify_student.css" />
   <link rel="icon" href="../Prime-College-Logo.ico" type="image/x-icon">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Add these styles to your notify_student.css file */
+
+/* Bulk Notify Button in Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.btn-bulk-notify {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-bulk-notify:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-bulk-notify i {
+  margin-right: 0.5rem;
+}
+
+/* Bulk Modal Specific Styles */
+.bulk-modal {
+  max-width: 600px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.radio-label:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.radio-label input[type="radio"] {
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.radio-label input[type="radio"]:checked + span {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.radio-label span {
+  font-size: 0.95rem;
+  color: #495057;
+  transition: all 0.3s ease;
+}
+
+.bulk-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.bulk-warning i {
+  color: #ffc107;
+  font-size: 1.25rem;
+}
+
+.bulk-warning span {
+  color: #856404;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Form Group Transitions */
+#bulkCourseGroup,
+#bulkSemesterGroup {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Make modals scrollable */
+.notify-modal {
+    display: none; /* hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto; /* <-- this allows vertical scrolling */
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    padding: 1rem; /* gives space around the modal */
+}
+
+.notify-modal-content {
+    background: #fff;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 600px; /* you can adjust */
+    margin: 2rem auto; /* centers and adds vertical space */
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-height: 90vh; /* <-- prevents modal from being taller than viewport */
+    overflow-y: auto; /* <-- makes modal body scrollable if content is too tall */
+}
+
+  </style>
 </head>
 <body>
 
@@ -96,6 +298,9 @@ $students_on_page = $result->num_rows;
       <h1><i class="fas fa-users"></i> Notify Students</h1>
       <p class="header-subtitle">Send messages and notifications to your students</p>
     </div>
+    <button onclick="openBulkNotifyForm()" class="btn btn-bulk-notify">
+      <i class="fas fa-bullhorn"></i> Bulk Notify
+    </button>
   </div>
 
   <div class="filter-card">
@@ -257,11 +462,12 @@ $students_on_page = $result->num_rows;
   <?php endif; ?>
 </div>
 </div>
+</div>
 
 <?php include("footer.php"); ?>
 <?php include("lower_footer.php"); ?>
 
-<!-- Notify Modal -->
+<!-- Individual Notify Modal -->
 <div class="notify-modal" id="notifyModal">
   <div class="notify-modal-content">
     <div class="modal-header">
@@ -284,6 +490,87 @@ $students_on_page = $result->num_rows;
           <i class="fas fa-check"></i> Send Message
         </button>
         <button type="button" class="btn btn-secondary" onclick="closeNotifyForm()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bulk Notify Modal -->
+<div class="notify-modal" id="bulkNotifyModal">
+  <div class="notify-modal-content bulk-modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-bullhorn"></i> Bulk Notification</h2>
+      <button type="button" class="close-btn" onclick="closeBulkNotifyForm()">&times;</button>
+    </div>
+    <form method="POST" action="notify_student.php" class="notify-form-content" id="bulkNotifyForm">
+      <div class="form-group">
+        <label>Send To:</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="notification_type" value="all" checked onchange="updateBulkTarget()">
+            <span>All Students</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="notification_type" value="course" onchange="updateBulkTarget()">
+            <span>Specific Course</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="notification_type" value="semester" onchange="updateBulkTarget()">
+            <span>Specific Semester</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="notification_type" value="course_semester" onchange="updateBulkTarget()">
+            <span>Course & Semester</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="bulkCourseGroup" style="display: none;">
+        <label for="bulkCourse"><i class="fas fa-book"></i> Select Course:</label>
+        <select name="bulk_course_id" id="bulkCourse" class="form-control">
+          <option value="0">Select Course</option>
+          <?php 
+          $courses_result = $conn->query("SELECT course_id, course_name FROM course ORDER BY course_name ASC");
+          while ($course = $courses_result->fetch_assoc()): ?>
+            <option value="<?= $course['course_id'] ?>">
+              <?= htmlspecialchars($course['course_name']) ?>
+            </option>
+          <?php endwhile; ?>
+        </select>
+      </div>
+
+      <div class="form-group" id="bulkSemesterGroup" style="display: none;">
+        <label for="bulkSemester"><i class="fas fa-calendar"></i> Select Semester:</label>
+        <select name="bulk_sem_id" id="bulkSemester" class="form-control">
+          <option value="0">Select Semester</option>
+          <?php 
+          $semester_result = $conn->query("SELECT sem_id, sem_name FROM semester ORDER BY sem_name ASC");
+          while ($semester = $semester_result->fetch_assoc()): ?>
+            <option value="<?= $semester['sem_id'] ?>">
+              <?= htmlspecialchars($semester['sem_name']) ?>
+            </option>
+          <?php endwhile; ?>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="bulkMessage">Message <span class="required">*</span></label>
+        <textarea name="bulk_message" id="bulkMessage" class="form-control" placeholder="Enter your message here..." required maxlength="500"></textarea>
+        <small class="char-count"><span id="bulkCharCount">0</span>/500 characters</small>
+      </div>
+
+      <div class="bulk-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="targetInfo">This will send notification to all active students.</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-paper-plane"></i> Send Bulk Notification
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeBulkNotifyForm()">
           <i class="fas fa-times"></i> Cancel
         </button>
       </div>
@@ -361,14 +648,56 @@ $students_on_page = $result->num_rows;
     document.getElementById('notifyModal').style.display = 'none';
   }
 
+  function openBulkNotifyForm() {
+    document.getElementById('bulkNotifyModal').style.display = 'flex';
+    updateBulkTarget();
+  }
+
+  function closeBulkNotifyForm() {
+    document.getElementById('bulkNotifyModal').style.display = 'none';
+    document.getElementById('bulkNotifyForm').reset();
+  }
+
+  function updateBulkTarget() {
+    const notifType = document.querySelector('input[name="notification_type"]:checked').value;
+    const courseGroup = document.getElementById('bulkCourseGroup');
+    const semesterGroup = document.getElementById('bulkSemesterGroup');
+    const targetInfo = document.getElementById('targetInfo');
+
+    courseGroup.style.display = 'none';
+    semesterGroup.style.display = 'none';
+
+    if (notifType === 'all') {
+      targetInfo.textContent = 'This will send notification to all active students.';
+    } else if (notifType === 'course') {
+      courseGroup.style.display = 'block';
+      targetInfo.textContent = 'This will send notification to all students in the selected course.';
+    } else if (notifType === 'semester') {
+      semesterGroup.style.display = 'block';
+      targetInfo.textContent = 'This will send notification to all students in the selected semester.';
+    } else if (notifType === 'course_semester') {
+      courseGroup.style.display = 'block';
+      semesterGroup.style.display = 'block';
+      targetInfo.textContent = 'This will send notification to all students in the selected course and semester.';
+    }
+  }
+
   document.getElementById('message').addEventListener('input', function() {
     document.getElementById('charCount').textContent = this.value.length;
   });
 
+  document.getElementById('bulkMessage').addEventListener('input', function() {
+    document.getElementById('bulkCharCount').textContent = this.value.length;
+  });
+
   window.addEventListener('click', function(event) {
     const modal = document.getElementById('notifyModal');
+    const bulkModal = document.getElementById('bulkNotifyModal');
     if (event.target === modal) {
       closeNotifyForm();
+    }
+    if (event.target === bulkModal) {
+      closeBulkNotifyForm();
     }
   });
 </script>

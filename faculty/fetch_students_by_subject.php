@@ -1,5 +1,6 @@
 <?php
 include("connect.php");
+include("auth_check.php");
 
 $sub_id = intval($_GET['sub_id']);
 

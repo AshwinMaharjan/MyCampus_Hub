@@ -23,6 +23,7 @@ $query = "
       FROM users u
       INNER JOIN subject sub_check ON u.course_id = sub_check.course_id AND u.sem_id = sub_check.sem_id
       WHERE u.role_id = 2 /* student */
+        AND u.status = 'Active'
         AND sub_check.sub_id = s.sub_id
         AND sub_check.role_id = ?
     ) AS total_students,
@@ -41,6 +42,7 @@ $query = "
       FROM users u
       INNER JOIN subject sub_check ON u.course_id = sub_check.course_id AND u.sem_id = sub_check.sem_id
       WHERE u.role_id = 2 /* student */
+      AND u.status = 'Active'
         AND sub_check.sub_id = s.sub_id
         AND sub_check.role_id = ?
         AND NOT EXISTS (
@@ -354,7 +356,7 @@ $stmt->close();
             </div>
           </div>
 
-          <div class="stats-container">
+          <!-- <div class="stats-container">
             <div class="stat-box">
               <span class="stat-number"><?= htmlspecialchars($sub['total_students']) ?></span>
               <span class="stat-label">Total Students</span>
@@ -365,10 +367,10 @@ $stmt->close();
             </div>
             <div class="stat-box pending">
               <span class="stat-number"><?= htmlspecialchars($sub['pending_marks']) ?></span>
-              <span class="stat-label">Pending</span>
+              <span class="stat-label">Pending Marks</span>
             </div>
           </div>
-
+ -->
           <div class="subject-actions">
             <a href="view_marks.php?sub_id=<?= $sub['sub_id'] ?>" class="action-btn marks-btn">
               <i class="fas fa-chart-line"></i>

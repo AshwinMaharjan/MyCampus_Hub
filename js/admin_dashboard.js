@@ -151,63 +151,57 @@ if (leaveTimeCtx && dashboardData.leaveTime) {
 
 // 3. User Composition (Doughnut Chart)
 const userCompCtx = document.getElementById('userCompositionChart');
-if (userCompCtx && dashboardData.userComp) {
-  const students = parseInt(dashboardData.userComp.students) || 0;
-  const faculty = parseInt(dashboardData.userComp.faculty) || 0;
-  const nonFaculty = parseInt(dashboardData.userComp.non_faculty) || 0;
-  
-  new Chart(userCompCtx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Students', 'Faculty', 'Non-Faculty'],
-      datasets: [{
-        data: [students, faculty, nonFaculty],
-        backgroundColor: ['#667eea', '#10b981', '#f59e0b'],
-        borderColor: '#fff',
-        borderWidth: 3,
-        hoverOffset: 10
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            padding: 15,
-            font: {
-              size: 12
-            }
-          }
+if (userCompCtx && dashboardData.userComp && dashboardData.userComp.length > 0) {
+    const labels = dashboardData.userComp.map(item => item.label);
+    const data = dashboardData.userComp.map(item => item.count);
+
+    new Chart(userCompCtx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#667eea', '#10b981', '#f59e0b'],
+                borderColor: '#fff',
+                borderWidth: 3,
+                hoverOffset: 10
+            }]
         },
-        tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: 12,
-          cornerRadius: 8,
-          callbacks: {
-            label: function(context) {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((context.parsed / total) * 100).toFixed(1);
-              return context.label + ': ' + context.parsed + ' users (' + percentage + '%)';
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 15, font: { size: 12 } }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed + ' users (' + percentage + '%)';
+                        }
+                    }
+                },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 14 },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return percentage + '%';
+                    }
+                }
             }
-          }
         },
-        datalabels: {
-          color: '#fff',
-          font: {
-            weight: 'bold',
-            size: 14
-          },
-          formatter: function(value) {
-            return value; // Show actual numbers
-          }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
+        plugins: [ChartDataLabels]
+    });
 }
+
 
 // 4. Study Material Upload Trend (Area Chart)
 const materialTrendCtx = document.getElementById('materialTrendChart');

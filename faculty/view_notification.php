@@ -5,6 +5,8 @@ if (!isset($_SESSION['uid'])) {
     header("Location: ../login.php");
     exit();
 }
+include("auth_check.php");
+
 
 if (isset($_GET['delete_id'])) {
     $delete_id = intval($_GET['delete_id']);

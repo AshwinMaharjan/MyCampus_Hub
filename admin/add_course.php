@@ -307,31 +307,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }, 300);
     }
 
-    // Auto-close after 2 seconds
     setTimeout(() => {
         closeNotification();
     }, <?php echo $redirect_delay; ?>);
 </script>
 <?php endif; ?>
 <script>
-// Course name validation - no numbers allowed
 document.querySelector('form').addEventListener('submit', function(e) {
     const courseNameInput = document.querySelector('input[name="course_name"]');
     const courseName = courseNameInput.value.trim();
     
-    // Check if course name contains any numbers
     const hasNumbers = /\d/.test(courseName);
     
     if (hasNumbers) {
         e.preventDefault(); // Prevent form submission
         
-        // Show notification modal
         showValidationError('Course name cannot contain numbers. Please use only letters and spaces.');
     }
 });
 
 function showValidationError(message) {
-    // Create notification overlay if it doesn't exist
     let overlay = document.getElementById('notificationOverlay');
     
     if (!overlay) {
@@ -341,7 +336,6 @@ function showValidationError(message) {
         document.body.appendChild(overlay);
     }
     
-    // Set notification content
     overlay.innerHTML = `
         <div class="notification-modal invalid">
             <div class="notification-icon">
@@ -356,10 +350,8 @@ function showValidationError(message) {
         </div>
     `;
     
-    // Show overlay
     overlay.classList.add('active');
     
-    // Auto-close after 3 seconds
     setTimeout(() => {
         closeValidationNotification();
     }, 3000);

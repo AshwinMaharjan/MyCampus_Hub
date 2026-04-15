@@ -38,39 +38,6 @@
   font-weight: 500;
 }
 
-/* Alert Messages */
-.alert {
-  padding: 16px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 500;
-  animation: slideDown 0.3s ease;
-}
-
-.alert-error {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border-left: 4px solid #dc2626;
-}
-
-.alert i {
-  font-size: 18px;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Table Container */
 .table-container {
   background: white;
@@ -78,6 +45,7 @@
   box-shadow: 0 4px 12px rgba(38, 53, 118, 0.1);
   overflow: hidden;
   animation: fadeIn 0.4s ease;
+  margin-bottom: 30px;
 }
 
 @keyframes fadeIn {
@@ -91,7 +59,7 @@
   }
 }
 
-/* Table Styles */
+/* Staff Table */
 .staff-table {
   width: 100%;
   border-collapse: collapse;
@@ -107,14 +75,14 @@
   padding: 18px;
   text-align: left;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #263576;
 }
 
 .staff-table th i {
-  margin-right: 8px;
+  margin-right: 6px;
   opacity: 0.8;
 }
 
@@ -133,10 +101,6 @@
   padding: 16px 18px;
   color: #374151;
   font-size: 14px;
-}
-
-.staff-table td:last-child {
-  text-align: center;
 }
 
 /* Profile Cell */
@@ -182,6 +146,7 @@
 
 /* Action Cell */
 .action-cell {
+  text-align: center;
   padding: 12px 18px;
 }
 
@@ -259,6 +224,8 @@
   background-color: #e5e7eb;
   color: #374151;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 10px 16px;
+  font-size: 13px;
 }
 
 .btn-secondary:hover {
@@ -378,8 +345,8 @@
   color: #dc2626;
 }
 
-/* Form Controls */
-.form-control {
+/* Form Controls in Modal */
+.notify-form-content .form-control {
   width: 100%;
   padding: 12px 14px;
   border: 2px solid #e5e7eb;
@@ -390,22 +357,22 @@
   box-sizing: border-box;
 }
 
-.form-control:focus {
+.notify-form-content .form-control:focus {
   outline: none;
   border-color: #263576;
   box-shadow: 0 0 0 3px rgba(38, 53, 118, 0.1);
 }
 
-.form-control:disabled {
+.notify-form-content .form-control:disabled {
   background-color: #f3f4f6;
   cursor: not-allowed;
 }
 
-input.form-control {
+.notify-form-content input.form-control {
   color: #6b7280;
 }
 
-textarea.form-control {
+.notify-form-content textarea.form-control {
   resize: vertical;
   min-height: 120px;
   max-height: 300px;
@@ -432,148 +399,149 @@ textarea.form-control {
 .form-actions .btn {
   flex: 1;
   max-width: 200px;
+  justify-content: center;
 }
 
 /* Notification Modal Styles */
 .notification-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-in;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in;
 }
 
 .notification-overlay.active {
-    display: flex;
+  display: flex;
 }
 
 .notification-modal {
-    background: white;
-    border-radius: 12px;
-    padding: 40px;
-    max-width: 500px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.4s ease-out;
-    position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s ease-out;
+  position: relative;
 }
 
 .notification-icon {
-    font-size: 60px;
-    margin-bottom: 20px;
-    animation: bounce 0.6s ease-out;
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease-out;
 }
 
 @keyframes bounce {
-    0% {
-        transform: scale(0);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .notification-modal.success .notification-icon {
-    color: #10b981;
+  color: #10b981;
 }
 
 .notification-modal.success {
-    border-left: 5px solid #10b981;
+  border-left: 5px solid #10b981;
 }
 
 .notification-modal.error .notification-icon {
-    color: #ef4444;
+  color: #ef4444;
 }
 
 .notification-modal.error {
-    border-left: 5px solid #ef4444;
+  border-left: 5px solid #ef4444;
 }
 
 .notification-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #1f2937;
 }
 
 .notification-message {
-    font-size: 16px;
-    color: #6b7280;
-    margin-bottom: 30px;
-    line-height: 1.6;
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 30px;
+  line-height: 1.6;
 }
 
 .notification-progress {
-    height: 3px;
-    background: #e5e7eb;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 20px;
+  height: 3px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 20px;
 }
 
 .notification-progress-bar {
-    height: 100%;
-    animation: progress linear 2s forwards;
-    border-radius: 3px;
+  height: 100%;
+  animation: progress linear 2s forwards;
+  border-radius: 3px;
 }
 
 .notification-modal.success .notification-progress-bar {
-    background: linear-gradient(90deg, #10b981, #059669);
+  background: linear-gradient(90deg, #10b981, #059669);
 }
 
 .notification-modal.error .notification-progress-bar {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
+  background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
 @keyframes progress {
-    from {
-        width: 100%;
-    }
-    to {
-        width: 0%;
-    }
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
 }
 
 .notification-button {
-    margin-top: 20px;
-    padding: 10px 30px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: auto;
+  margin-top: 20px;
+  padding: 10px 30px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: auto;
 }
 
 .notification-modal.success .notification-button {
-    background: #10b981;
-    color: white;
+  background: #10b981;
+  color: white;
 }
 
 .notification-modal.success .notification-button:hover {
-    background: #059669;
-    transform: translateY(-2px);
+  background: #059669;
+  transform: translateY(-2px);
 }
 
 .notification-modal.error .notification-button {
-    background: #ef4444;
-    color: white;
+  background: #ef4444;
+  color: white;
 }
 
 .notification-modal.error .notification-button:hover {
-    background: #dc2626;
-    transform: translateY(-2px);
+  background: #dc2626;
+  transform: translateY(-2px);
 }
 
 /* Responsive Design */
@@ -630,5 +598,21 @@ textarea.form-control {
 
   .header-content h1 {
     font-size: 18px;
+  }
+
+  .staff-table {
+    font-size: 12px;
+  }
+
+  .notification-modal {
+    padding: 30px 20px;
+  }
+
+  .notification-title {
+    font-size: 20px;
+  }
+
+  .notification-message {
+    font-size: 14px;
   }
 }

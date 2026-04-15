@@ -15,7 +15,7 @@ $redirect_url = null;
 $redirect_delay = 2000;
 
 // Get user's course information (non-faculty assigned to a course)
-$userQuery = "SELECT course_id, course_name FROM users WHERE user_id = ?";
+$userQuery = "SELECT coordinator_for, course_name FROM users WHERE user_id = ?";
 $userStmt = $conn->prepare($userQuery);
 $userStmt->bind_param("i", $staff_id);
 $userStmt->execute();
@@ -23,14 +23,13 @@ $userResult = $userStmt->get_result();
 $userData = $userResult->fetch_assoc();
 $userStmt->close();
 
-if (!$userData || !$userData['course_id']) {
+if (!$userData || !$userData['coordinator_for']) {
     $message = "No course assigned to your account. Please contact administration.";
     $notification_type = "error";
 }
 
-$userCourseId = $userData['course_id'] ?? null;
+$userCourseId = $userData['coordinator_for'] ?? null;
 $userCourseName = $userData['course_name'] ?? null;
-
 // Get filter values
 $filter_semester = isset($_GET['sem_id']) ? intval($_GET['sem_id']) : 0;
 $filter_subject = 0;
@@ -199,22 +198,57 @@ $present_count = 0;
 $absent_count = 0;
 $late_count = 0;
 
+// Calculate filtered average attendance %
+$studentStats = [];
+
 foreach ($attendanceRecords as $record) {
+    $uid = $record['user_id'];
+
+    if (!isset($studentStats[$uid])) {
+        $studentStats[$uid] = [
+            'present' => 0,
+            'late' => 0,
+            'total' => 0
+        ];
+    }
+
+    // Count totals
+    $studentStats[$uid]['total']++;
+
     switch ($record['status']) {
         case 'Present':
+            $studentStats[$uid]['present']++;
             $present_count++;
             break;
+
+        case 'Late':
+            $studentStats[$uid]['late']++;
+            $late_count++;
+            break;
+
         case 'Absent':
             $absent_count++;
-            break;
-        case 'Late':
-            $late_count++;
             break;
     }
 }
 
-$attendance_percentage = $totalRecords > 0 
-    ? round((($present_count + $late_count) / $totalRecords) * 100, 2) 
+$sumPercentages = 0;
+$studentCount = 0;
+
+foreach ($studentStats as $stats) {
+    if ($stats['total'] > 0) {
+
+        // Late = 0.5
+        $attendanceScore = $stats['present'] + ($stats['late'] * 0.5);
+
+        $percentage = ($attendanceScore / $stats['total']) * 100;
+        $sumPercentages += $percentage;
+        $studentCount++;
+    }
+}
+
+$avgPercentage = $studentCount > 0
+    ? round($sumPercentages / $studentCount, 2)
     : 0;
 ?>
 

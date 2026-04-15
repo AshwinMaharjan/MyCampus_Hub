@@ -1,6 +1,8 @@
 <?php
 session_start();
 include("connect.php");
+include("auth_check.php");
+
 
 // Check if user is logged in and is coordinator
 if (!isset($_SESSION['uid'])) {

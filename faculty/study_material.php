@@ -1,6 +1,7 @@
 <?php
 session_start();
 include("connect.php");
+include("auth_check.php");
 
 // Check if user is logged in and is faculty
 if (!isset($_SESSION['uid'])) {

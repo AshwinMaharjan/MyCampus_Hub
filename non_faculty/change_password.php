@@ -1,6 +1,8 @@
 <?php
 session_start();
 include("connect.php");
+include("auth_check.php");
+
 
 $msg = '';
 if (!isset($_SESSION['uid'])) {

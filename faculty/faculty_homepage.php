@@ -1,14 +1,25 @@
 <?php
 session_start();
 include("connect.php");
+include("auth_check.php");
+
 if (!isset($_SESSION['uid'])) {
   header("Location: login.php");
   exit();
 }
  
-$faculty_id = $_SESSION['uid'];
+$uid = $_SESSION['uid'];
+$role_id = $_SESSION['type']; 
 
-// Fetch Number of Subjects Faculty Teaches
+$test_query = "SELECT 1 FROM subject WHERE role_id = '$uid' LIMIT 1";
+$test_result = mysqli_query($conn, $test_query);
+
+if (mysqli_num_rows($test_result) > 0) {
+    $faculty_id = $uid;
+} else {
+    $faculty_id = $role_id;
+}
+
 $subjects_query = "
     SELECT COUNT(DISTINCT sub_id) as total 
     FROM subject 
@@ -17,7 +28,6 @@ $subjects_query = "
 $subjects_result = mysqli_query($conn, $subjects_query);
 $total_subjects = mysqli_fetch_assoc($subjects_result)['total'];
 
-// Fetch Total Students Across All Subjects
 $students_query = "
     SELECT COUNT(DISTINCT u.user_id) as total
     FROM users u
@@ -26,11 +36,11 @@ $students_query = "
         AND u.sem_id = s.sem_id
     WHERE s.role_id = '$faculty_id'
       AND u.role_id = 2
+      AND u.status = 'Active'
 ";
 $students_result = mysqli_query($conn, $students_query);
 $total_students = mysqli_fetch_assoc($students_result)['total'];
 
-// Fetch 7-Day Average Attendance
 $seven_days_ago = date('Y-m-d', strtotime('-7 days'));
 $attendance_avg_query = "
     SELECT 
@@ -58,7 +68,6 @@ $attendance_percentage = $attendance_avg_data['total_count'] > 0 ?
 // $pending_student_leave_result = mysqli_query($conn, $pending_student_leave_query);
 // $pending_teacher_leaves = mysqli_fetch_assoc($pending_student_leave_result)['total'] ?? 0;
 
-// Fetch Pending Leave Requests of Logged-in Teacher
 $pending_teacher_leave_query = "
     SELECT COUNT(*) as total
     FROM staff_leave_requests
@@ -68,7 +77,6 @@ $pending_teacher_leave_query = "
 $pending_teacher_leave_result = mysqli_query($conn, $pending_teacher_leave_query);
 $pending_teacher_leaves = mysqli_fetch_assoc($pending_teacher_leave_result)['total'] ?? 0;
 
-// Fetch Total Study Materials Uploaded by Faculty
 $study_materials_query = "
     SELECT COUNT(*) as total 
     FROM study_material 
@@ -77,7 +85,6 @@ $study_materials_query = "
 $study_materials_result = mysqli_query($conn, $study_materials_query);
 $total_study_materials = mysqli_fetch_assoc($study_materials_result)['total'];
 
-// Attendance Marking Status (by subject)
 $attendance_marking_query = "
     SELECT 
         s.sub_name,
@@ -95,7 +102,6 @@ while($row = mysqli_fetch_assoc($attendance_marking_result)) {
     $attendance_marking_data[] = $row;
 }
 
-// Student Attendance Report (Last 30 Days)
 $student_attendance_report_query = "
     SELECT 
         DATE(a.attendance_date) as date,
@@ -116,7 +122,6 @@ while($row = mysqli_fetch_assoc($student_attendance_report_result)) {
     $student_attendance_report_data[] = $row;
 }
 
-// Marks Entry Status (Last 30 Days)
 $marks_entry_status_query = "
     SELECT 
         COUNT(CASE WHEN m.marks_id IS NOT NULL THEN 1 END) as entered,
@@ -139,7 +144,6 @@ $marks_entry_data = mysqli_fetch_assoc($marks_entry_result);
 $marks_entered = $marks_entry_data['entered'] ?? 0;
 $marks_pending = max(0, ($marks_entry_data['total_expected'] ?? 0) - $marks_entered);
 
-// Study Material Upload Trend (Last 30 Days)
 $material_upload_trend_query = "
     SELECT 
         DATE(upload_date) as date,
@@ -156,7 +160,6 @@ while($row = mysqli_fetch_assoc($material_upload_trend_result)) {
     $material_upload_trend_data[] = $row;
 }
 
-// Subject-wise Student Performance
 $subject_performance_query = "
     SELECT 
         s.sub_name,
@@ -198,7 +201,6 @@ while($row = mysqli_fetch_assoc($subject_performance_result)) {
 // while($row = mysqli_fetch_assoc($pending_leaves_table_result)) {
 //     $pending_leaves_table_data[] = $row;
 // }
-// Fetch Pending Leave Requests of Logged-in Teacher (Table View)
 $pending_leaves_table_query = "
     SELECT 
         slr.leave_id,
@@ -219,7 +221,6 @@ while($row = mysqli_fetch_assoc($pending_leaves_table_result)) {
     $pending_leaves_table_data[] = $row;
 }
 
-// Study Materials Pending Approval
 $materials_pending_query = "
     SELECT 
         sm.material_id,
@@ -243,7 +244,6 @@ while($row = mysqli_fetch_assoc($materials_pending_result)) {
     $materials_pending_data[] = $row;
 }
 
-// Latest Marks Entry
 $latest_marks_query = "
     SELECT 
         m.marks_id,
@@ -268,7 +268,6 @@ while($row = mysqli_fetch_assoc($latest_marks_result)) {
     $latest_marks_data[] = $row;
 }
 
-// Top 10 Performing Students in Faculty's Subjects
 $top_students_query = "
     SELECT 
         u.full_name,
@@ -308,7 +307,6 @@ while($row = mysqli_fetch_assoc($top_students_result)) {
   <?php include("menu.php"); ?>
   
   <div class="dashboard-container">
-    <!-- Top Stats Cards -->
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-icon blue">
@@ -392,7 +390,6 @@ while($row = mysqli_fetch_assoc($top_students_result)) {
       </div>
     </div>
 
-    <!-- Top Students Section -->
     <div class="charts-row">
       <div class="chart-card full-width">
         <h3>Top 10 Performing Students</h3>
@@ -416,7 +413,6 @@ while($row = mysqli_fetch_assoc($top_students_result)) {
       </div>
     </div>
 
-    <!-- Tables Section -->
     <div class="tables-row">
       <div class="table-card">
         <h3>My Pending Leave Requests</h3>
@@ -553,7 +549,6 @@ while($row = mysqli_fetch_assoc($top_students_result)) {
   <script src="../js/chart.min.js"></script>
   <script src="../js/chartjs-plugin-datalabels.min.js"></script>
   <script>
-    // Pass PHP data to JavaScript
     const facultyDashboardData = {
       attendanceMarking: <?php echo json_encode($attendance_marking_data); ?>,
       studentAttendanceTrend: <?php echo json_encode($student_attendance_report_data); ?>,

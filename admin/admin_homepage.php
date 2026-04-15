@@ -6,7 +6,6 @@ if (!isset($_SESSION['uid'])) {
   exit();
 }
 
-// Fetch Active Students
 $active_students_query = "
     SELECT COUNT(*) AS total 
     FROM users 
@@ -16,7 +15,6 @@ $active_students_query = "
 $active_students_result = mysqli_query($conn, $active_students_query);
 $active_students = mysqli_fetch_assoc($active_students_result)['total'];
 
-// Fetch Active Staff (Faculty + Non-Faculty)
 $active_staff_query = "
     SELECT COUNT(*) AS total 
     FROM users 
@@ -26,12 +24,10 @@ $active_staff_query = "
 $active_staff_result = mysqli_query($conn, $active_staff_query);
 $active_staff = mysqli_fetch_assoc($active_staff_result)['total'];
 
-// Fetch Pending Leave Requests
 $pending_leave_query = "SELECT COUNT(*) as total FROM staff_leave_requests WHERE status = 'pending'";
 $pending_leave_result = mysqli_query($conn, $pending_leave_query);
 $pending_leave = mysqli_fetch_assoc($pending_leave_result)['total'];
 
-// Fetch 1 Week Attendance Overview
 $one_week_ago = date('Y-m-d', strtotime('-7 days'));
 $attendance_query = "SELECT 
     COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
@@ -43,7 +39,6 @@ $attendance_data = mysqli_fetch_assoc($attendance_result);
 $attendance_percentage = $attendance_data['total_count'] > 0 ? 
     round(($attendance_data['present_count'] / $attendance_data['total_count']) * 100, 1) : 0;
 
-// Student Enrollment by Course
 $enrollment_query = " SELECT c.course_name, COUNT(u.user_id) as student_count FROM course c LEFT JOIN users u ON c.course_id = u.course_id AND u.role_id = 2 AND u.status = 'Active' GROUP BY c.course_id, c.course_name ORDER BY student_count DESC ";
 $enrollment_result = mysqli_query($conn, $enrollment_query);
 $enrollment_data = [];
@@ -51,7 +46,6 @@ while($row = mysqli_fetch_assoc($enrollment_result)) {
     $enrollment_data[] = $row;
 }
 
-// Leave Requests Over Time (Last 30 days)
 $leave_time_query = "SELECT DATE(requested_at) as date, COUNT(*) as count
     FROM staff_leave_requests
     WHERE requested_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
@@ -63,12 +57,24 @@ while($row = mysqli_fetch_assoc($leave_time_result)) {
     $leave_time_data[] = $row;
 }
 
-// User Composition
-$user_comp_query = " SELECT SUM(CASE WHEN role_id = 2 THEN 1 ELSE 0 END) as students, SUM(CASE WHEN role_id = 3 AND staff_type = 'Teaching' THEN 1 ELSE 0 END) as faculty, SUM(CASE WHEN role_id = 3 AND staff_type = 'Non Teaching' THEN 1 ELSE 0 END) as non_faculty FROM users WHERE status = 'Active' ";
-$user_comp_result = mysqli_query($conn, $user_comp_query);
-$user_comp = mysqli_fetch_assoc($user_comp_result);
+$student_query = "SELECT COUNT(*) as students FROM users WHERE role_id = 2 AND status = 'Active'";
+$student_result = mysqli_query($conn, $student_query);
+$student_count = mysqli_fetch_assoc($student_result)['students'] ?? 0;
 
-// Study Material Upload Trend (Last 7 days)
+$faculty_query = "SELECT COUNT(*) as faculty FROM users WHERE role_id = 3 AND status = 'Active' AND is_teacher = 1";
+$faculty_result = mysqli_query($conn, $faculty_query);
+$faculty_count = mysqli_fetch_assoc($faculty_result)['faculty'] ?? 0;
+
+$coordinator_query = "SELECT COUNT(*) as coordinators FROM users WHERE role_id = 3 AND status = 'Active' AND is_coordinator = 1";
+$coordinator_result = mysqli_query($conn, $coordinator_query);
+$coordinator_count = mysqli_fetch_assoc($coordinator_result)['coordinators'] ?? 0;
+
+$user_comp = [
+    ['label' => 'Students', 'count' => (int)$student_count],
+    ['label' => 'Faculty', 'count' => (int)$faculty_count],
+    ['label' => 'Coordinators', 'count' => (int)$coordinator_count]
+];
+
 $material_trend_query = "SELECT DATE(upload_date) as date, COUNT(*) as count
     FROM study_material
     WHERE upload_date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
@@ -80,7 +86,6 @@ while($row = mysqli_fetch_assoc($material_trend_result)) {
     $material_trend_data[] = $row;
 }
 
-// Subject-wise Class Average Marks
 $subject_avg_query = "SELECT s.sub_name, AVG(m.percentage) as avg_percentage
     FROM marks m
     JOIN subject s ON m.sub_id = s.sub_id
@@ -93,7 +98,6 @@ while($row = mysqli_fetch_assoc($subject_avg_result)) {
     $subject_avg_data[] = $row;
 }
 
-// Grade Distribution (Overall)
 $grade_dist_query = "
 SELECT UPPER(TRIM(grade)) AS grade, COUNT(*) as count
 FROM marks
@@ -108,13 +112,11 @@ while($row = mysqli_fetch_assoc($grade_dist_result)) {
     $grade_dist_data[$row['grade']] = intval($row['count']);
 }
 
-// Ensure all grades are present, even if count = 0
 $grades = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
 foreach ($grades as $g) {
     if (!isset($grade_dist_data[$g])) $grade_dist_data[$g] = 0;
 }
 
-// Top 10 Students by Average Grade
 $top_students_query = "
     SELECT u.full_name, u.id_number, AVG(m.percentage) as avg_percentage, 
     COUNT(DISTINCT m.sub_id) as subjects_taken
@@ -130,8 +132,6 @@ $top_students_data = [];
 while($row = mysqli_fetch_assoc($top_students_result)) {
     $top_students_data[] = $row;
 }
-
-// Subject Count Per Course
 $subject_per_course_query = "
     SELECT c.course_name, COUNT(s.sub_id) AS subject_count
     FROM course c
@@ -145,9 +145,6 @@ $subject_per_course_data = [];
 while ($row = mysqli_fetch_assoc($subject_per_course_result)) {
     $subject_per_course_data[] = $row;
 }
-
-
-// Latest 5 Leave Requests
 $latest_leave_query = "SELECT slr.leave_id, u.full_name, slr.leave_type, slr.start_date, 
     slr.end_date, slr.status, slr.requested_at
     FROM staff_leave_requests slr
@@ -160,7 +157,6 @@ while($row = mysqli_fetch_assoc($latest_leave_result)) {
     $latest_leave_data[] = $row;
 }
 
-// Recent Study Materials
 $recent_materials_query = "SELECT sm.material_id, s.sub_name, u.full_name as full_name, 
     sm.material_type, sm.upload_date, sm.file_path, sm.file_name, sm.approval_status
     FROM study_material sm
@@ -310,7 +306,6 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
                 <th>Leave Type</th>
                 <th>Date Range</th>
                 <th>Status</th>
-                <!-- <th>Actions</th> -->
               </tr>
             </thead>
             <tbody>
@@ -325,23 +320,11 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
                         <?php echo ucfirst($leave['status']); ?>
                       </span>
                     </td>
-                    <!-- <td class="action-buttons">
-                      <?php if(strtolower($leave['status']) == 'pending'): ?>
-                        <button class="btn-accept" onclick="handleLeave(<?php echo $leave['leave_id']; ?>, 'Approved')">
-                          <i class="fas fa-check"></i>
-                        </button>
-                        <button class="btn-reject" onclick="handleLeave(<?php echo $leave['leave_id']; ?>, 'Rejected')">
-                          <i class="fas fa-times"></i>
-                        </button>
-                      <?php else: ?>
-                        <span class="text-muted">Processed</span>
-                      <?php endif; ?>
-                    </td> -->
                   </tr>
                 <?php endforeach; ?>
               <?php else: ?>
                 <tr>
-                  <td colspan="5" style="text-align:center;color:#6b7280;padding:20px;">No leave requests yet.</td>
+                  <td colspan="4" style="text-align:center;color:#6b7280;padding:20px;">No leave requests yet.</td>
                 </tr>
               <?php endif; ?>
             </tbody>
@@ -359,46 +342,40 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
                 <th>Full Name</th>
                 <th>File Type</th>
                 <th>Uploaded At</th>
-                <!-- <th>Actions</th> -->
                 <th>Status</th>
-                 
               </tr>
             </thead>
             <tbody>
-              <?php foreach($recent_materials_data as $material): ?>
+              <?php if (count($recent_materials_data) > 0): ?>
+                <?php foreach($recent_materials_data as $material): ?>
+                  <tr>
+                    <td><?php echo htmlspecialchars($material['sub_name']); ?></td>
+                    <td><?php echo htmlspecialchars($material['full_name']); ?></td>
+                    <td>
+                      <span class="file-type-badge">
+                        <?php echo strtoupper($material['material_type']); ?>
+                      </span>
+                    </td>
+                    <td><?php echo date('M d, Y H:i', strtotime($material['upload_date'])); ?></td>
+                    <td>
+                      <span class="status-badge <?php echo strtolower($material['approval_status']); ?>">
+                        <?php echo ucfirst($material['approval_status']); ?>
+                      </span>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php else: ?>
                 <tr>
-                  <td><?php echo htmlspecialchars($material['sub_name']); ?></td>
-                  <td><?php echo htmlspecialchars($material['full_name']); ?></td>
-                  <td>
-                    <span class="file-type-badge">
-                      <?php echo strtoupper($material['material_type']); ?>
-                    </span>
-                  </td>
-                  <td><?php echo date('M d, Y H:i', strtotime($material['upload_date'])); ?></td>
-                  <td>
-  <span class="status-badge <?php echo strtolower($material['approval_status']); ?>">
-    <?php echo ucfirst($material['approval_status']); ?>
-  </span>
-</td>
-
-                  <!-- <td class="action-buttons">
-                    <a href="<?php echo htmlspecialchars($material['file_path']); ?>" 
-                       class="btn-view" target="_blank" title="View">
-                      <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="<?php echo htmlspecialchars($material['file_path']); ?>" 
-                       class="btn-download" download title="Download">
-                      <i class="fas fa-download"></i>
-                    </a>
-                  </td> -->
+                  <td colspan="5" style="text-align:center;color:#6b7280;padding:20px;">No study materials yet.</td>
                 </tr>
-              <?php endforeach; ?>
+              <?php endif; ?>
             </tbody>
           </table>
         </div>
       </div>
     </div>
-    </div>
+  </div>
+  </div>
   </div>
 
   <?php include("footer.php"); ?>
@@ -407,7 +384,6 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
   <script src="../js/chart.min.js"></script>
   <script src="../js/chartjs-plugin-datalabels.min.js"></script>
   <script>
-    // Pass PHP data to JavaScript
     const dashboardData = {
       enrollment: <?php echo json_encode($enrollment_data); ?>,
       leaveTime: <?php echo json_encode($leave_time_data); ?>,
@@ -417,6 +393,8 @@ while($row = mysqli_fetch_assoc($recent_materials_result)) {
       gradeDist: <?php echo json_encode($grade_dist_data); ?>,
       subjectPerCourse: <?php echo json_encode($subject_per_course_data); ?>
     };
+
+    console.log('Dashboard Data:', dashboardData);
   </script>
   <script src="../js/admin_dashboard.js"></script>
 </body>
