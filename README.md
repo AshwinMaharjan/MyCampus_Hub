@@ -99,14 +99,14 @@ MyCampus_Hub/
 ├── admin/              # Admin panel pages and logic
 ├── faculty/            # Faculty dashboard and module pages
 ├── student/            # Student dashboard and module pages
-├── non_faculty/              # Non-faculty staff pages
+├── non_faculty/        # Non-faculty dashboard and module pages
 ├── css/                # Stylesheets
-├── js/                # Scripts
-├── webfonts/                # WebFonts
+├── js/                 # Scripts
+├── webfonts/           # WebFonts
 ├── images/             # Site and profile images
 ├── uploads/            # Uploaded profile and document images
-├── homepage.php           # Application entry point
-└── mycampus_hub.sql     # Database schema and seed data
+├── homepage.php        # Application entry point
+└── mycampus_hub.sql    # Database schema and seed data
 ```
 
 ## Screenshots
