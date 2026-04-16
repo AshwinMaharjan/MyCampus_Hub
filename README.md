@@ -139,11 +139,18 @@ MyCampus_Hub/
 - Enter Marks: <img width="858" height="1043" alt="localhost_mycampus_hub_faculty_enter_marks php" src="https://github.com/user-attachments/assets/35bc9c4f-6b5f-4eb2-8402-85f3a12a29cf" />
 - View Marks: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/abe68418-9d00-43b0-a612-68a867cbc805" />
 - Mark Attendance: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/c8311bb3-cb6b-4ca4-bdc6-031ec076e959" />
-- View Attendance:
-- Attendance Reports:
-- Leave Requests:
-- Study Material:
-
+- View Attendance: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/cb389d1e-db7d-4e60-9fd5-a01de89b49ec" />
+- Attendance Reports:<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/567dd232-0cca-4224-b834-097760cfd977" /> <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e2f984f5-0b90-4aa7-94ee-367c6b71622a" />
+- Leave Requests: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/cd1e4ed6-e1e8-4dca-88ac-b6d460e2bb91" />
+- View Leave Requests: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e09dad0c-26e2-4fb8-9931-cc6316e882a8" />
+- Study Material: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/588abd6a-ab89-46b9-94f3-cca4122ab9b2" /> <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/8c74d57b-9b74-49a9-bfcf-bf606304f3e9" />
+- Coordinator Dashboard: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/bb38b5d6-9428-4dd7-a386-fb46993052ab" /> <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/352e31d7-e7d6-499c-93d4-87d79214ae49" />
+- View Subjects: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/865e6ac3-182e-41ca-abbe-c0f9151e39fa" />
+- View Marks: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/7169fe1b-56cf-46e2-a2cb-7e793036b852" />
+- View Attendance: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/2242fe44-6947-433b-810e-694648cf0f41" />
+- View My Leave Requests: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/08dbe6ea-5fac-4ad1-8b56-cbabc25a36b4" />
+- View Student Leave Requests: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/d874ef72-f968-494f-903b-b342a0e0713f" />
+- View Study Material: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/3c0f1cd5-8b7e-42c0-97a1-b79ba94c295b" />
 
 ## Roadmap
 
