@@ -241,7 +241,7 @@ $profile_photo = "../admin/images/uploads/profile_photos/" . $photo_file;
 
 <header class="main-header">
   <div class="logo-container">
-    <a href="homepage.php">
+    <a href="non_faculty_homepage.php">
       <img src="../images/prime_logo.jpg" alt="Prime Logo" class="logo">
     </a>
   </div>

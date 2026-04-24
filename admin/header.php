@@ -223,7 +223,7 @@
 
   <header class="main-header">
     <div class="logo-container">
-      <a href="homepage.php">
+      <a href="admin_homepage.php">
         <img src="images/prime_logo.jpg" alt="Prime Logo" class="logo">
       </a>
     </div>
@@ -238,7 +238,7 @@
       <div class="profile-dropdown">
         <img src="images/default_profile.png" alt="Profile" class="profile-img" id="profileIcon" />
         <div class="dropdown-menu" id="dropdownMenu">
-          <a href="homepage.php"><i class="fas fa-gauge"></i> Dashboard</a>
+          <a href="admin_homepage.php"><i class="fas fa-gauge"></i> Dashboard</a>
           <a href="admin_profile.php"><i class="fas fa-user-circle"></i> My Profile</a>
           <a href="change_password.php"><i class="fas fa-key"></i> Change Password</a>
           <a href="manage_staff.php"><i class="fas fa-user-tie"></i> Manage Staff</a>
