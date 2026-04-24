@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MyCampus Hub - College Management System
 
 A comprehensive web-based college management system for streamlining academic operations, built with PHP and MySQL.
@@ -170,3 +171,7 @@ Have questions or want to contribute? Reach out:
 ---
 
 > Built with 🎓 and PHP. MyCampus Hub — one platform for your entire campus.
+=======
+# MyCampus_Hub
+MyCampus Hub is a web-based College Management System developed as an academic project to digitize and streamline core campus operations. The system provides role-based access for administrators, staff, and students, enabling efficient management of users, courses, subjects, notifications, and internal academic records.
+>>>>>>> 7476226 (final changes)
