@@ -2,6 +2,10 @@
 
 A comprehensive web-based college management system for streamlining academic operations, built with PHP and MySQL.
 
+## 🌐 Live Demo
+
+https://my-campushub.great-site.net/?i=1
+
 ## Features
 
 - **User Authentication**: Secure role-based login and profile management for all users
