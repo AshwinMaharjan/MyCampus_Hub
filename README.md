@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-# MyCampus_Hub
-MyCampus Hub is a web-based College Management System developed as an academic project to digitize and streamline core campus operations. The system provides role-based access for administrators, staff, and students, enabling efficient management of users, courses, subjects, notifications, and internal academic records.
-=======
 # MyCampus Hub - College Management System
 
 A comprehensive web-based college management system for streamlining academic operations, built with PHP and MySQL.
 
-## 🌐 Live Demo
+## Live Demo
 
 https://my-campushub.great-site.net/?i=1
 
@@ -118,6 +114,7 @@ MyCampus_Hub/
 ```
 
 ## Screenshots
+
 - Landing Page: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/f656afea-145d-42c2-a9d7-83581f515869" />
 - About Section: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/bb72d4bb-a9c1-4ec3-954e-cb16757c9f57" />
 - Access Section: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/0fa54466-9972-44b9-9be8-faf029c0202a" />
@@ -148,7 +145,7 @@ MyCampus_Hub/
 - View Marks: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/abe68418-9d00-43b0-a612-68a867cbc805" />
 - Mark Attendance: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/c8311bb3-cb6b-4ca4-bdc6-031ec076e959" />
 - View Attendance: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/cb389d1e-db7d-4e60-9fd5-a01de89b49ec" />
-- Attendance Reports:<img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/567dd232-0cca-4224-b834-097760cfd977" /> <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e2f984f5-0b90-4aa7-94ee-367c6b71622a" />
+- Attendance Reports: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/567dd232-0cca-4224-b834-097760cfd977" /> <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e2f984f5-0b90-4aa7-94ee-367c6b71622a" />
 - Leave Requests: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/cd1e4ed6-e1e8-4dca-88ac-b6d460e2bb91" />
 - View Leave Requests: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/e09dad0c-26e2-4fb8-9931-cc6316e882a8" />
 - Study Material: <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/588abd6a-ab89-46b9-94f3-cca4122ab9b2" /> <img width="1366" height="768" alt="image" src="https://github.com/user-attachments/assets/8c74d57b-9b74-49a9-bfcf-bf606304f3e9" />
@@ -178,4 +175,3 @@ Have questions or want to contribute? Reach out:
 ---
 
 > Built with 🎓 and PHP. MyCampus Hub — one platform for your entire campus.
->>>>>>> 0dc93962c238aa94f92f2abe36a5fb6823d3485d
