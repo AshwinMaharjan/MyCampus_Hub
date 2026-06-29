@@ -1,6 +1,4 @@
 <?php
-<<<<<<< HEAD
-
 // Check if a session is already started before calling session_start()
 // Database connection
 $servername = "localhost";  // Your database host (usually localhost)
@@ -11,7 +9,6 @@ $dbname = "mycampus_hub"; // Your database name
 $conn = mysqli_connect($servername, $user, $pass, $dbname);
 
 // Check connection
-=======
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -23,7 +20,6 @@ $dbname = "mycampus_hub";
 
 $conn = mysqli_connect($servername, $user, $pass, $dbname);
 
->>>>>>> 0dc93962c238aa94f92f2abe36a5fb6823d3485d
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }

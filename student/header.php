@@ -239,11 +239,8 @@ $profile_photo = "../uploads/" . $photo_file;
 
 <header class="main-header">
   <div class="logo-container">
-<<<<<<< HEAD
     <a href="student_homepage.php">
-=======
     <a href="homepage.php">
->>>>>>> 0dc93962c238aa94f92f2abe36a5fb6823d3485d
       <img src="../images/prime_logo.jpg" alt="Prime Logo" class="logo">
     </a>
   </div>

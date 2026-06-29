@@ -11,11 +11,8 @@
 <footer class="main-footer">
   <div class="footer-content">
     <div class="footer-left">
-<<<<<<< HEAD
       <a href="non_faculty_homepage.php" class="logo-link">
-=======
       <a href="homepage.php" class="logo-link">
->>>>>>> 0dc93962c238aa94f92f2abe36a5fb6823d3485d
         <img src="../images/prime_logo.jpg" alt="Prime Logo" class="logo" />
       </a>
       <p>Khusibun, Nayabazar, Kathmandu</p>
@@ -28,11 +25,8 @@
     <div class="footer-right">
       <h2>Quick Links</h2>
       <ul class="quick-links">
-<<<<<<< HEAD
         <li><a href="non_faculty_homepage.php">Home</a></li>
-=======
         <li><a href="homepage.php">Home</a></li>
->>>>>>> 0dc93962c238aa94f92f2abe36a5fb6823d3485d
         <li><a href="about.php">About Us</a></li>
         <li><a href="courses.php">Courses</a></li>
         <li><a href="notice.php">Notices</a></li>
